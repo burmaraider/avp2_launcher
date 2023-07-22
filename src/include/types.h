@@ -22,7 +22,7 @@ typedef struct button_t
     bool isPressed;
     Vector2 position;
     Texture texture[3];
-    int currentTexture;
+    uint32_t currentTexture;
     char szName[32];
     void (*onPress)(struct button_t *);
     void (*onUnload)(struct button_t *);
@@ -34,7 +34,7 @@ typedef struct checkbox_t
     bool isChecked;
     Vector2 position;
     Texture texture[2];
-    int currentTexture;
+    uint32_t currentTexture;
     char szName[32];
     char szText[256];
     void (*onPress)(struct checkbox_t *);
@@ -43,7 +43,7 @@ typedef struct checkbox_t
 
 static void UnloadButton(Button *button)
 {
-    for (int i = 0; i < 3; i++)
+    for (size_t i = 0; i < 3; i++)
     {
         UnloadTexture(button->texture[i]);
     }
@@ -51,7 +51,7 @@ static void UnloadButton(Button *button)
 
 static void UnloadCheckBox(Checkbox *checkbox)
 {
-    for (int i = 0; i < 2; i++)
+    for (size_t i = 0; i < 2; i++)
     {
         UnloadTexture(checkbox->texture[i]);
     }
@@ -59,14 +59,14 @@ static void UnloadCheckBox(Checkbox *checkbox)
 
 typedef struct mode_t
 {
-    int width;
-    int height;
-    int refreshRate;
+    uint32_t width;
+    uint32_t height;
+    uint32_t refreshRate;
 } Mode;
 
 typedef struct monitor_t
 {
-    int modeCount;
+    uint32_t modeCount;
     Mode **modes;
 } Monitor;
 
@@ -91,4 +91,3 @@ typedef unsigned __LONG32 DWORD;
 typedef char CHAR;
 typedef short SHORT;
 typedef __LONG32 LONG;
-

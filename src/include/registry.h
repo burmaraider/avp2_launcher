@@ -18,6 +18,7 @@
 #include <errhandlingapi.h>
 #include <winerror.h>
 
+
 //Program headers
 #include "constants.h"
 
@@ -266,13 +267,4 @@ static void SetRegistryValue(HKEY hKey, const char* pszValueName, DWORD dwType, 
     }
 
     RegCloseKey(hSubKey);
-}
-
-/// @brief This function frees the registry entries
-static void FreeRegistryEntries()
-{
-    free(g_pszCommandLine);
-    free(g_pszInstallDir);
-    free(g_Settings.szCommands);
-    free(g_Settings.szLanguage);
 }

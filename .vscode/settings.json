@@ -67,7 +67,10 @@
         "richedit.h": "c",
         "wingdi.h": "c",
         "time.h": "c",
-        "WINUSER.H": "cpp"
+        "WINUSER.H": "cpp",
+        "winerror.h": "c",
+        "loader.h": "c",
+        "registry.h": "c"
     },
     "cmake.preferredGenerators": [
         "Ninja"

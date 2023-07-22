@@ -11,7 +11,8 @@
 #include <shellscalingapi.h>
 #include <wingdi.h>
 #include <richedit.h>
-#include "../include/Screens/advanced.h"
+#include "..\include\loader.h"
+#include "..\include\Screens\advanced.h"
 
 //Win32 TextBox
 HWND g_hWnd;
@@ -99,8 +100,8 @@ void OKPress(Button* button)
     currentScreen = 0;
     Screen = DefaultScreen;
     SetWindowSize(screenWidth, screenHeight);
-    xButton.onPress = ButtonPress;
-    xButton.position = (Vector2){ 505, 1 };
+    g_xButton.onPress = ButtonPress;
+    g_xButton.position = (Vector2){ 505, 1 };
 }
 
 void Cancel(Button *button)
@@ -108,8 +109,8 @@ void Cancel(Button *button)
     currentScreen = 0;
     Screen = DefaultScreen;
     SetWindowSize(screenWidth, screenHeight);
-    xButton.onPress = ButtonPress;
-    xButton.position = (Vector2){ 505, 1 };
+    g_xButton.onPress = ButtonPress;
+    g_xButton.position = (Vector2){ 505, 1 };
 
     //hide hwndTextBox
     ShowWindow(hwndTextBox, SW_HIDE);
@@ -183,11 +184,11 @@ void SetupScreenAdvanced()
 
     SetWindowSize(456, 431);
 
-    okButton.position = (Vector2){ 123, 386 };
-    okButton.onPress = OKPress;
+    g_okButton.position = (Vector2){ 123, 386 };
+    g_okButton.onPress = OKPress;
 
-    cancelButton.position = (Vector2){ 235, 386 };
-    xButton.position = (Vector2){ 435, 1 };
+    g_cancelButton.position = (Vector2){ 235, 386 };
+    g_xButton.position = (Vector2){ 435, 1 };
 
 
     //setup checkboxes
@@ -235,9 +236,22 @@ void SetupScreenAdvanced()
 
 
     checkboxesAdvanced = (Checkbox **)malloc(sizeof(Checkbox *) * CHECK_COUNT);
+    //check if malloc failed
+    if (!checkboxesAdvanced)
+    {
+        MessageBox(NULL, "Failed to allocate memory", "Error", MB_OK | MB_ICONERROR);
+        exit(1);
+    }
+
     for (size_t i = 0; i < CHECK_COUNT; i++)
     {
         checkboxesAdvanced[i] = (Checkbox *)malloc(sizeof(Checkbox));
+        //check if malloc failed
+        if (!checkboxesAdvanced[i])
+        {
+            MessageBox(NULL, "Failed to allocate memory", "Error", MB_OK | MB_ICONERROR);
+            exit(1);
+        }
     }
 
     checkboxesAdvanced[0] = &saveCommands;
@@ -259,12 +273,12 @@ void SetCallbacksAdvancedScreen(Button *button)
 
 void RenderAdvancedScreen()
 {
-    DrawTexture(backgroundImage[currentScreen], 0, 0, WHITE);
+    DrawTexture(g_backgroundImage[currentScreen], 0, 0, WHITE);
 
-    DrawTexture(okButton.texture[okButton.currentTexture], okButton.position.x, okButton.position.y, WHITE);
-    DrawTexture(cancelButton.texture[cancelButton.currentTexture], cancelButton.position.x, cancelButton.position.y, WHITE);
+    DrawTexture(g_okButton.texture[g_okButton.currentTexture], g_okButton.position.x, g_okButton.position.y, WHITE);
+    DrawTexture(g_cancelButton.texture[g_cancelButton.currentTexture], g_cancelButton.position.x, g_cancelButton.position.y, WHITE);
 
-    DrawTexture(xButton.texture[xButton.currentTexture], xButton.position.x, xButton.position.y, WHITE);
+    DrawTexture(g_xButton.texture[g_xButton.currentTexture], g_xButton.position.x, g_xButton.position.y, WHITE);
 
     //Draw checkboxes
     DrawTexture(saveCommands.texture[saveCommands.isChecked], saveCommands.position.x, saveCommands.position.y, WHITE);
@@ -296,7 +310,7 @@ void CheckAllCheckBoxes()
         }
         else
         {
-            buttons[i]->currentTexture = UP;
+            g_buttons[i]->currentTexture = UP;
         }
     }
 }
