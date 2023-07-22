@@ -1,8 +1,8 @@
 #pragma once
-
+#include <Windows.h>
 #include "raylib.h"
 #include "stdint.h"
-#include <minwindef.h>
+
 
 
 #define UP 0
@@ -13,8 +13,6 @@
 #define SCREEN_MAIN 0
 #define SCREEN_OPTIONS 1
 #define SCREEN_DISPLAY 2
-
-#define ERROR_SUCCESS 0
 
 typedef struct button_t
 {
@@ -85,9 +83,3 @@ typedef struct settings_t
     bool nOptionsWarning;
     bool nSaveCommands;
 } LauncherSettings;
-
-typedef unsigned short WORD;
-typedef unsigned __LONG32 DWORD;
-typedef char CHAR;
-typedef short SHORT;
-typedef __LONG32 LONG;

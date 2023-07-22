@@ -102,6 +102,12 @@ void OKPress(Button* button)
     SetWindowSize(screenWidth, screenHeight);
     g_xButton.onPress = ButtonPress;
     g_xButton.position = (Vector2){ 505, 1 };
+    
+    //free textures
+    for (size_t i = 0; i < CHECK_COUNT; i++)
+    {
+        UnloadCheckBox(checkboxesAdvanced[i]);
+    }
 }
 
 void Cancel(Button *button)
@@ -114,6 +120,12 @@ void Cancel(Button *button)
 
     //hide hwndTextBox
     ShowWindow(hwndTextBox, SW_HIDE);
+
+    //free textures
+    for (size_t i = 0; i < CHECK_COUNT; i++)
+    {
+        UnloadCheckBox(checkboxesAdvanced[i]);
+    }
 }
 
 void SetupCheckBoxesState()

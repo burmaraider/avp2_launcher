@@ -1,5 +1,5 @@
 #pragma once
-
+#include <Windows.h>
 #include "raylib.h"
 
 //C headers
@@ -86,7 +86,7 @@ static void LoadBackgroundImages()
         if (!pData) continue;
 
         memcpy(pData, &bitmapFileHeader, sizeof(BITMAPFILEHEADER));
-        memcpy(pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
+        memcpy((char*)pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
 
         // convert bitmap to image
         Image iImage = LoadImageFromMemory(".bmp", pData, nFileSizeLessHeader + sizeof(BITMAPFILEHEADER));
@@ -119,7 +119,7 @@ static void LoadTextureFromResource(Texture *texture, const char *name)
     if (!pData) return;
 
     memcpy(pData, &bitmapFileHeader, sizeof(BITMAPFILEHEADER));
-    memcpy(pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
+    memcpy((char*)pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
 
     // convert bitmap to image
     Image iImage = LoadImageFromMemory(".bmp", pData, nFileSizeLessHeader + sizeof(BITMAPFILEHEADER));

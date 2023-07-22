@@ -1,22 +1,11 @@
 #pragma once
-
+#include <Windows.h>
 //C headers
 #include <stdint.h>
 #include <stdlib.h>
 #include "string.h"
 
-// Windows headers
-#include <windef.h>
-#include <minwinbase.h>
-#include <apisetcconv.h>
-#include <winreg.h>
-#include <winuser.rh>
-#include <securitybaseapi.h>
-#include <libloaderapi.h>
-#include <processthreadsapi.h>
-#include <shellapi.h>
-#include <errhandlingapi.h>
-#include <winerror.h>
+
 
 
 //Program headers

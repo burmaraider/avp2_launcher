@@ -1,3 +1,4 @@
+#include <Windows.h>
 #include "raylib.h"
 #include "raymath.h"
 #include <stdint.h>
@@ -117,6 +118,7 @@ void ButtonPress(Button *button)
     
 }
 
+
 int main(int argc, char *argv[])
 {
 
@@ -124,6 +126,7 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[1], "-install") == 0)
         {
+
             // start server
             InstallAVP2Registry();
             //relaunch the launcher as non admin
