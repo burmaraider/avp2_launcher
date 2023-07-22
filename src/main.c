@@ -8,13 +8,6 @@
 #include "include\registry.h"
 #include "string.h"
 
-#include <minwindef.h>
-#include <winbase.h>
-#include <winsmcrd.h>
-#include <apisetcconv.h>
-#include <winreg.h>
-#include <mmsystem.h>
-#include <winuser.h>
 #include <time.h>
 #include <GLFW/glfw3.h>
 
