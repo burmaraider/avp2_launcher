@@ -67,17 +67,14 @@ ${SOURCE_DIR}/Screens/advanced.c
 )
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} )
-
-if(WIN32)
-add_custom_command( TARGET ${PROJECT_NAME} PRE_BUILD COMMAND windres -i ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.rc -O coff ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.res)
-#set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.res")
-endif()
-
 target_link_libraries(${PROJECT_NAME} raylib
 ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.res)
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
+
+
 if(MSVC)
+  target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.rc)
   if(${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
   endif()
@@ -85,6 +82,7 @@ if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
   endif()
 else()
+    add_custom_command( TARGET ${PROJECT_NAME} PRE_BUILD COMMAND windres -i ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.rc -O coff ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.res)
     if(${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
       set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE LINK_FLAGS "-mwindows")
     endif()
