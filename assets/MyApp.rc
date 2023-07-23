@@ -82,6 +82,22 @@ BACKSPACE               WAVE    "backspace.wav"
 STRINGTABLE
 {
   IDS_APPNAME, 	"Aliens vs. Predator 2 Launcher"
+  16, 	"This will disable the use of DirectMusic. Some sound cards may have incompatibilities with DirectMusic.  Use this for troubleshooting only."
+  17, 	"This will disable the logo movies at the start of the game."
+  18, 	"This will disable all atmospheric (not clipping plane) fog. There should be no performance increase or decrease. However, this might possibly be useful on cards that \"almost\" support table fog."
+  19, 	"This will disable all joysticks and gamepads.  Use this if your particular joystick is causing problems when the game starts."
+  20, 	"This will disable a feature on some video cards that can improve performance, but uses more of the card's video memory as a result.  Most AGP video cards benefit from this feature being enabled.  However, this may cause lock-ups on a few PCI video cards."
+  21, 	"This will disable the use of a hardware cursor. Some older cards do not support the hardware cursor."
+  22, 	"This will disable the use of an animated loading screen. Use this for troubleshooting."
+  23, 	"This restores all configuration settings to the original defaults. This includes resetting the key configuration, detail level and sound options. This is useful if you've changed settings, and you just want things back the way they were. "
+  24, 	"This is for advanced users only. The command line is used for setting console variables at startup."
+  25, 	"ERROR - Unable to find the AVP2.rez file.  Please make sure that AVP2 is installed properly and that your AVP2 disc 1 CD is in the drive."
+  26, 	"ERROR - Could not launch LITHTECH.EXE.  Please make sure that AVP2 is installed properly."
+  27, 	"In order to get the best gameplay experience from AVP2, please select the initial performance setting you would like the game to use.  You can change this setting later using AVP2's in-game menus."
+  28, 	"Low detail will provide the best game performance at the sacrifice of visual quality.  The Recommended System Specs:  P3 450, 128 MB RAM, 16 MB Direct 3D Video Card, 16-bit sound card."
+  29, 	"Medium detail will provide a good trade-off between game performance and visual quality.  The Recommended System Specs:  P3 700, 128 MB RAM, 32 MB Direct 3D Video Card, 16-bit sound card."
+  30, 	"High detail will provide high visual quality, but game performance may suffer on slower systems.  The Recommended System Specs:  P3 700, 256 MB RAM, 32 MB Direct 3D Video Card, 16-bit sound card."
+  31, 	"ERROR - Unable to launch the stand-alone server.  Please verify that AVP2 is properly installed on your machine and try again."
 }
 
 

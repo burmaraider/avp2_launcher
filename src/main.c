@@ -308,7 +308,6 @@ void Inputs()
 
     if(currentScreen == SCREEN_OPTIONS)
     {
-
         CheckAllCheckBoxes();
     }
 }

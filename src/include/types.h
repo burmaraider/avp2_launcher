@@ -1,9 +1,9 @@
-#pragma once
+#ifndef _TYPES_H_
+#define _TYPES_H_
+
 #include <Windows.h>
 #include "raylib.h"
 #include "stdint.h"
-
-
 
 #define UP 0
 #define FOCUS 1
@@ -35,8 +35,10 @@ typedef struct checkbox_t
     uint32_t currentTexture;
     char szName[32];
     char szText[256];
+    uint8_t id;
     void (*onPress)(struct checkbox_t *);
     void (*onUnload)(struct checkbox_t *);
+    void (*onHover)(struct checkbox_t *);
 } Checkbox;
 
 static void UnloadButton(Button *button)
@@ -79,7 +81,9 @@ typedef struct settings_t
     bool nDisableTripleBuffering;
     bool nDisplayWarning;
     char *szLanguage;
-    uint8_t nNumLauncherRuns;
+    uint32_t nNumLauncherRuns;
     bool nOptionsWarning;
     bool nSaveCommands;
 } LauncherSettings;
+
+#endif // _TYPES_H_

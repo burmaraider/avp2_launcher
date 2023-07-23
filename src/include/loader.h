@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LOADER_H
+#define LOADER_H
 #include <Windows.h>
 #include "raylib.h"
 
@@ -289,3 +290,4 @@ static void Loader_InitializeAllTextures()
         g_optionsButton.isEnabled = FALSE;
     }
 }
+#endif // LOADER_H

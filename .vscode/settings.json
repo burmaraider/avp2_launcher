@@ -70,7 +70,8 @@
         "WINUSER.H": "cpp",
         "winerror.h": "c",
         "loader.h": "c",
-        "registry.h": "c"
+        "registry.h": "c",
+        "shellscalingapi.h": "c"
     },
     "cmake.preferredGenerators": [
         "Ninja"

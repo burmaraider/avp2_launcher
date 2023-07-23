@@ -1,12 +1,12 @@
-#pragma once
+#ifndef _REGISTRY_H_
+#define _REGISTRY_H_
+
 #include <Windows.h>
 //C headers
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "string.h"
-
-
-
 
 //Program headers
 #include "constants.h"
@@ -257,3 +257,5 @@ static void SetRegistryValue(HKEY hKey, const char* pszValueName, DWORD dwType, 
 
     RegCloseKey(hSubKey);
 }
+
+#endif // _REGISTRY_H_
