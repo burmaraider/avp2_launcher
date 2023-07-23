@@ -1,11 +1,11 @@
 #include "raylib.h"
 #include <string.h>
 
-#include <shellscalingapi.h>
+
 #include <richedit.h>
 
 #include "..\include\registry.h"
-#include "..\include\loader.h"
+#include "..\include\utils.h"
 #include "..\include\Screens\advanced.h"
 
 //Win32 TextBox
@@ -28,39 +28,6 @@ Checkbox** checkboxesAdvanced;
 bool bIsMouseHoveringOverTextBox = false;
 uint32_t nCurrentToolTip = 0;
 
-
-#define GET_X_LPARAM(lp)    ((int)(short)LOWORD(lp))
-#define GET_Y_LPARAM(lp)    ((int)(short)HIWORD(lp))
-typedef BOOL (WINAPI * SETPROCESSDPIAWARE_T)(void);
-typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
-
-bool win32_SetProcessDpiAware(void) {
-    HMODULE shcore = LoadLibraryA("Shcore.dll");
-    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
-    if (shcore) {
-        SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
-    }
-    HMODULE user32 = LoadLibraryA("User32.dll");
-    SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
-    if (user32) {
-        SetProcessDPIAware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
-    }
-
-    bool ret = false;
-    if (SetProcessDpiAwareness) {
-        ret = SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE) == S_OK;
-    } else if (SetProcessDPIAware) {
-        ret = SetProcessDPIAware() != 0;
-    }
-
-    if (user32) {
-        FreeLibrary(user32);
-    }
-    if (shcore) {
-        FreeLibrary(shcore);
-    }
-    return ret;
-}
 
 void CheckBoxHover(Checkbox *checkbox)
 {
@@ -111,10 +78,10 @@ void OKPress(Button* button)
     SaveSettingsToRegistry();
 
     //SaveSettings();
-    currentScreen = 0;
+    g_nCurrentScreen = 0;
     Screen = DefaultScreen;
-    SetWindowSize(screenWidth, screenHeight);
-    g_xButton.onPress = ButtonPress;
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    g_xButton.onPress = ButtonPressCallback;
     g_xButton.position = (Vector2){ 505, 1 };
     
     //free textures
@@ -122,14 +89,16 @@ void OKPress(Button* button)
     {
         UnloadCheckBox(checkboxesAdvanced[i]);
     }
+
+    ScreenUpdateLoop = MainScreenUpdateLoop;
 }
 
 void Cancel(Button *button)
 {
-    currentScreen = 0;
+    g_nCurrentScreen = 0;
     Screen = DefaultScreen;
-    SetWindowSize(screenWidth, screenHeight);
-    g_xButton.onPress = ButtonPress;
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    g_xButton.onPress = ButtonPressCallback;
     g_xButton.position = (Vector2){ 505, 1 };
 
     //hide hwndTextBox
@@ -140,6 +109,8 @@ void Cancel(Button *button)
     {
         UnloadCheckBox(checkboxesAdvanced[i]);
     }
+    
+    ScreenUpdateLoop = MainScreenUpdateLoop;
 }
 
 void SetupCheckBoxesState()
@@ -310,54 +281,10 @@ void SetCallbacksAdvancedScreen(Button *button)
     button->onPress = Cancel;
 }
 
-static char* FormatStringWithNewLines(const char* szString, Rect rTextDrawArea)
-{
-    //copy string to buffer
-    char* szStringTempBuffer = (char*)malloc(strlen(szString) + 1);
-    strcpy(szStringTempBuffer, szString);
-
-    //calculate max chars per line
-    int nMaxCharactersPerLine = rTextDrawArea.width / MeasureTextEx(g_font, "A", 12, 1).x;
-
-    char* words[1024];
-    int numWords = 0;
-    char* token = strtok(szStringTempBuffer, " ");
-    while (token != NULL && numWords < 1024)
-    {
-        words[numWords++] = token;
-        token = strtok(NULL, " ");
-    }
-
-    char szBuffer[1024];
-    int nChars = 0;
-    int nCharsThisLine = 0;
-    for (int i = 0; i < numWords; i++)
-    {
-        int nWordLength = strlen(words[i]);
-        if (nCharsThisLine + nWordLength + 1 > nMaxCharactersPerLine)
-        {
-            szBuffer[nChars++] = '\n';
-            nCharsThisLine = 0;
-        }
-        strcpy(szBuffer + nChars, words[i]);
-        nChars += nWordLength;
-        szBuffer[nChars++] = ' ';
-        nCharsThisLine += nWordLength + 1;
-    }
-
-    szBuffer[nChars] = '\0';
-
-    char* szFormattedString = (char*)malloc(strlen(szBuffer) + 1);
-    strcpy(szFormattedString, szBuffer);
-
-    free(szStringTempBuffer);
-
-    return szFormattedString;
-}
 
 void RenderAdvancedScreen()
 {
-    DrawTexture(g_backgroundImage[currentScreen], 0, 0, WHITE);
+    DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
     DrawTexture(g_okButton.texture[g_okButton.currentTexture], g_okButton.position.x, g_okButton.position.y, WHITE);
     DrawTexture(g_cancelButton.texture[g_cancelButton.currentTexture], g_cancelButton.position.x, g_cancelButton.position.y, WHITE);
@@ -409,4 +336,10 @@ void CheckAllCheckBoxes()
             g_buttons[i]->currentTexture = UP;
         }
     }
+}
+
+void AdvancedUpdateLoop()
+{
+    nCurrentToolTip = 0;
+    CheckAllCheckBoxes();
 }

@@ -12,5 +12,6 @@ void SetupScreenAdvanced();
 void SetCallbacksAdvancedScreen(Button *button);
 void RenderAdvancedScreen();
 void CheckAllCheckBoxes();
+void AdvancedUpdateLoop();
 
 #endif

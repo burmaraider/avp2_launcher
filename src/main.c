@@ -11,41 +11,24 @@
 #include <time.h>
 #include <GLFW/glfw3.h>
 
-#include "include\loader.h"
+#include "include\utils.h"
 #include "include\Screens\advanced.h"
-
-
-
-/// @brief The registry keys and values used by the game.
-/// @details The game uses the registry to store settings and the install directory.
-/// @note The game uses the registry to store settings and the install directory.
-char *g_pszCommandLine;
-char *g_pszInstallDir;
-bool g_bAVP2Installed;
-LauncherSettings g_Settings;
-
-uint32_t screenWidth = 525;
-uint32_t screenHeight = 245;
 
 Monitor **mon;
 
 void InitGame(void);
 void GameLoop(void); // Update and Draw one frame
-void (*Screen)(void);
 void DefaultScreen(void);
+void MainScreenUpdateLoop(void);
 void Inputs(void);
-
 void GetModes();
 void FreeModes();
-bool showModes = FALSE;
 bool bShouldClose = FALSE;
 
-
-
-uint32_t currentScreen = 0;
+/// GLOBAL DELCARATIONS
+uint32_t g_nCurrentScreen = 0;
 Font g_font;
 Texture g_backgroundImage[6];
-
 Button g_playButton;
 Button g_serverButton;
 Button g_displayButton;
@@ -57,20 +40,25 @@ Button g_okButton;
 Button g_cancelButton;
 Button g_installButton;
 Button **g_buttons;
-Checkbox **g_checkboxes;
+char *g_pszCommandLine;
+char *g_pszInstallDir;
+bool g_bAVP2Installed;
+LauncherSettings g_Settings;
+void (*Screen)(void);
+void (*ScreenUpdateLoop)(void);
 
 // predator animation
-uint32_t predatorFrame = 0;
-Texture predator;
-float countdown = 1.0f; // 10 seconds countdown
+uint32_t nPredatorTextureFrame = 0;
+Texture tPredatorAnimationTexture;
+float fPredatorCountdownTimer = 1.0f; // 10 seconds countdown
 
-void ButtonPress(Button *button)
+void ButtonPressCallback(Button *button)
 {
     PlaySoundResource("OK");
 
     if (strcmp(button->szName, "play") == 0)
     {
-        currentScreen = 1;
+        g_nCurrentScreen = 1;
     }
     else if (strcmp(button->szName, "server") == 0)
     {
@@ -78,16 +66,17 @@ void ButtonPress(Button *button)
     else if (strcmp(button->szName, "display") == 0)
     {
 
-        currentScreen = SCREEN_DISPLAY;
+        g_nCurrentScreen = SCREEN_DISPLAY;
     }
     else if (strcmp(button->szName, "options") == 0)
     {
 
-        currentScreen = SCREEN_OPTIONS;
+        g_nCurrentScreen = SCREEN_OPTIONS;
         Screen = RenderAdvancedScreen;
         SetupScreenAdvanced();
         SetCallbacksAdvancedScreen(&g_cancelButton);
         SetCallbacksAdvancedScreen(&g_xButton);
+        ScreenUpdateLoop = AdvancedUpdateLoop;
     }
     else if (strcmp(button->szName, "exit") == 0)
     {
@@ -111,10 +100,9 @@ void ButtonPress(Button *button)
     
 }
 
-
 int main(int argc, char *argv[])
 {
-
+    // GET THE COMMAND LINE TO HANDLE OUR INSTALL ARGUMENT WITH ADMIN RIGHTS
     if (argc > 1)
     {
         if (strcmp(argv[1], "-install") == 0)
@@ -130,28 +118,32 @@ int main(int argc, char *argv[])
         }
     }
 
+    // GET THE AVP2 REGISTRY ENTRIES, IF THEY EXIST
     GetRegistryEntries();
 
 
 
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    // set vsync
+    // INIT RAYLIB
+    // VSYNC AND WINDOW UNDECORATED
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
 
-
-    
-    //load string resource with LoadStringA
+    //SETS THE WINDOW TITLE
+    //--------------------------------------------------------------------------------------
     char szTitle[256];
-
     LoadString(GetModuleHandle(NULL), IDS_APPNAME, szTitle, 256);
-    InitWindow(screenWidth, screenHeight, szTitle);
+    InitWindow(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT, szTitle);
 
+    //SETUP OUR FUNCTIONS FOR UPDATES
+    //--------------------------------------------------------------------------------------
     Screen = DefaultScreen;
+    ScreenUpdateLoop = MainScreenUpdateLoop;
 
+    //GET ALL MODES REPORTED BY GLFW
+    //--------------------------------------------------------------------------------------
     GetModes();
 
     //Load all the textures for the GUI
+    //--------------------------------------------------------------------------------------
     Loader_InitializeAllTextures();
 
     PlayRandomIntroSound();
@@ -204,6 +196,7 @@ int main(int argc, char *argv[])
 void GameLoop(void)
 {
     Inputs();
+    ScreenUpdateLoop();
 
     BeginDrawing();
     ClearBackground(BLACK);
@@ -211,22 +204,25 @@ void GameLoop(void)
     Screen();
 
     EndDrawing();
+}
 
+void MainScreenUpdateLoop()
+{
     float deltaTime = GetFrameTime();
-    countdown -= deltaTime;
-    if (countdown <= 0.0f)
+    fPredatorCountdownTimer -= deltaTime;
+    if (fPredatorCountdownTimer <= 0.0f)
     {
-        countdown = 1.0f;                         // Reset countdown
-        predatorFrame = (predatorFrame + 1) % 25; // Cycle predator frame
+        fPredatorCountdownTimer = 1.0f;                         // Reset countdown
+        nPredatorTextureFrame = (nPredatorTextureFrame + 1) % 25; // Cycle predator frame
     }
 }
 
 void DefaultScreen()
 {
     // draw background
-    DrawTexture(g_backgroundImage[currentScreen], 0, 0, WHITE);
+    DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
-    DrawTexturePro(g_backgroundImage[5], (Rect){predatorFrame * (g_backgroundImage[5].width / 24), 0, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Rect){387, 18, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Vector2){0, 0}, 0, WHITE);
+    DrawTexturePro(g_backgroundImage[5], (Rect){nPredatorTextureFrame * (g_backgroundImage[5].width / 24), 0, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Rect){387, 18, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Vector2){0, 0}, 0, WHITE);
 
     if(g_bAVP2Installed)
     {
@@ -305,11 +301,6 @@ void Inputs()
 {
     DragWindow();
     CheckAllButtons();
-
-    if(currentScreen == SCREEN_OPTIONS)
-    {
-        CheckAllCheckBoxes();
-    }
 }
 
 void GetModes()
