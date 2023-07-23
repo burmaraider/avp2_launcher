@@ -11,5 +11,6 @@
 void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop);
 void OptionsRenderScreen();
 void OptionsUpdateLoop();
+void OptionsUnloadScreen();
 
 #endif

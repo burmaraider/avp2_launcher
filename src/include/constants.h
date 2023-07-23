@@ -8,6 +8,9 @@
 #define IDI_APPICON                     101
 #define IDS_APPNAME                     1
 
+#define SCREEN_SPLASH 0
+#define SCREEN_OPTIONS 1
+
 static const uint32_t AVP2_MAIN_SCREEN_WIDTH = 525;
 static const uint32_t AVP2_MAIN_SCREEN_HEIGHT = 245;
 

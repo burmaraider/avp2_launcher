@@ -172,6 +172,10 @@ void SplashSetupScreen()
 
 void SplashScreenRender()
 {
+    //Start the 2D Canvas
+    BeginDrawing();
+    ClearBackground(BLACK);
+
     // draw background
     DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
@@ -192,6 +196,27 @@ void SplashScreenRender()
     DrawTexture(exitButton.texture[exitButton.currentTexture], exitButton.position.x, exitButton.position.y, WHITE);
     DrawTexture(minimizeButton.texture[minimizeButton.currentTexture], minimizeButton.position.x, minimizeButton.position.y, WHITE);
     DrawTexture(xButton.texture[xButton.currentTexture], xButton.position.x, xButton.position.y, WHITE);
+
+    EndDrawing();
+}
+
+
+void SplashUnloadScreen()
+{
+    // null check
+    if (buttons == NULL)
+    {
+        return;
+    }
+    // free buttons
+    for (size_t i = 0; i < SPLASH_BUTTON_COUNT; i++)
+    {
+        buttons[i]->onUnload(buttons[i]);
+        free(buttons[i]);
+        buttons[i] = NULL;
+    }
+    free(buttons);
+    buttons = NULL;
 }
 
 static void CheckAllButtons()

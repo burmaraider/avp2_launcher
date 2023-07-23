@@ -1,31 +1,29 @@
 #include "raylib.h"
 #include "raymath.h"
 
-//C headers
+// C headers
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-//Program headers
+// Program headers
 #include "include\types.h"
 #include "include\registry.h"
 #include "include\utils.h"
 
-//Screen headers
+// Screen headers
 #include "include\Screens\splash.h"
 #include "include\Screens\advanced.h"
 
 void InitGame(void);
-void Loop(void); // Update and Draw one frame
 bool bShouldClose = FALSE;
 
 /// GLOBAL DELCARATIONS
 uint32_t g_nCurrentScreen = 0;
 Font g_font;
 Texture g_backgroundImage[6];
-
 char *g_pszCommandLine;
 char *g_pszInstallDir;
 bool g_bAVP2Installed;
@@ -40,10 +38,9 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[1], "-install") == 0)
         {
-
-            // start server
+            // start install process
             InstallAVP2Registry();
-            //relaunch the launcher as non admin
+            // relaunch the launcher as non admin
             char szPath[MAX_PATH];
             GetModuleFileName(NULL, szPath, MAX_PATH);
             ShellExecute(NULL, "open", szPath, NULL, NULL, SW_SHOWNORMAL);
@@ -54,17 +51,15 @@ int main(int argc, char *argv[])
     // GET THE AVP2 REGISTRY ENTRIES, IF THEY EXIST
     GetRegistryEntries();
 
-
-
     // INIT RAYLIB
     // VSYNC AND WINDOW UNDECORATED
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
 
-    //SETS THE WINDOW TITLE
+    // SETS THE WINDOW TITLE
     //--------------------------------------------------------------------------------------
     char *szTitle;
     szTitle = (char *)malloc(256);
-    if(szTitle == NULL)
+    if (szTitle == NULL)
     {
         MessageBox(NULL, "Failed to allocate memory for the window title.", "Error", MB_OK | MB_ICONERROR);
         exit(1);
@@ -73,17 +68,17 @@ int main(int argc, char *argv[])
     InitWindow(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT, szTitle);
     free(szTitle);
 
-    //SETUP OUR FUNCTIONS FOR UPDATES
+    // SETUP OUR FUNCTIONS FOR UPDATES
     //--------------------------------------------------------------------------------------
     SplashSetupScreen();
     ScreenRenderLoop = SplashScreenRender;
     ScreenUpdateLoop = SplashUpdateLoop;
 
-    //GET ALL MODES REPORTED BY GLFW
+    // GET ALL MODES REPORTED BY GLFW
     //--------------------------------------------------------------------------------------
-    //GetModes(mon);
+    // GetModes(mon);
 
-    //Load all the textures for the GUI
+    // Load all the textures for the GUI
     //--------------------------------------------------------------------------------------
     Loader_InitializeBackgroundTextures();
 
@@ -91,7 +86,14 @@ int main(int argc, char *argv[])
 
     while (!bShouldClose)
     {
-        Loop();
+        // Allow the user to drag the window context
+        DragWindow();
+
+        // Update loop, can change with function pointers
+        ScreenUpdateLoop();
+
+        // Render loop, can change with function pointers
+        ScreenRenderLoop();
     }
 
     // De-Initialization
@@ -109,30 +111,15 @@ int main(int argc, char *argv[])
     free(g_pszInstallDir);
     free(g_Settings.szCommands);
     free(g_Settings.szLanguage);
-    //FreeModes(mon);
+    // FreeModes(mon);
+
+    OptionsUnloadScreen();
+    SplashUnloadScreen();
+    CloseAudioDevice();
 
     ExitWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     return 0;
-}
-
-void Loop(void)
-{
-    //Allow the user to drag the window context
-    DragWindow();
-
-    // Update loop, can change with function pointers
-    ScreenUpdateLoop();
-
-    //Start the 2D Canvas
-    BeginDrawing();
-    ClearBackground(BLACK);
-
-    // Render loop, can change with function pointers
-    ScreenRenderLoop();
-
-    //End the 2D Canvas
-    EndDrawing();
 }
 
 void ButtonPressCallback(Button *button)
@@ -149,7 +136,7 @@ void ButtonPressCallback(Button *button)
     else if (strcmp(button->szName, "display") == 0)
     {
 
-        g_nCurrentScreen = SCREEN_DISPLAY;
+        // g_nCurrentScreen = SCREEN_DISPLAY;
     }
     else if (strcmp(button->szName, "options") == 0)
     {
@@ -169,7 +156,7 @@ void ButtonPressCallback(Button *button)
 
         bShouldClose = TRUE;
     }
-    else if(strcmp(button->szName, "install") == 0)
+    else if (strcmp(button->szName, "install") == 0)
     {
         InstallAVP2Registry();
     }

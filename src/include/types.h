@@ -10,10 +10,6 @@
 #define HOVER 1
 #define DOWN 2
 
-#define SCREEN_MAIN 0
-#define SCREEN_OPTIONS 1
-#define SCREEN_DISPLAY 2
-
 typedef struct button_t
 {
     bool isEnabled;
@@ -41,21 +37,7 @@ typedef struct checkbox_t
     void (*onHover)(struct checkbox_t *);
 } Checkbox;
 
-static void UnloadButton(Button *button)
-{
-    for (size_t i = 0; i < 3; i++)
-    {
-        UnloadTexture(button->texture[i]);
-    }
-}
 
-static void UnloadCheckBox(Checkbox *checkbox)
-{
-    for (size_t i = 0; i < 2; i++)
-    {
-        UnloadTexture(checkbox->texture[i]);
-    }
-}
 
 typedef struct mode_t
 {

@@ -414,4 +414,20 @@ static void DragWindow()
     }
 }
 
+static void UnloadButton(Button *button)
+{
+    for (size_t i = 0; i < 3; i++)
+    {
+        UnloadTexture(button->texture[i]);
+    }
+}
+
+static void UnloadCheckBox(Checkbox *checkbox)
+{
+    for (size_t i = 0; i < 2; i++)
+    {
+        UnloadTexture(checkbox->texture[i]);
+    }
+}
+
 #endif // LOADER_H
