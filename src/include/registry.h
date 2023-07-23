@@ -210,21 +210,21 @@ static bool InstallAVP2Registry()
 
         LONG results = RegCreateKeyEx(HKEY_LOCAL_MACHINE, AVP2_REGISTRY_x64, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hKey, &dwDisposition);
 
-        if (results != 0)
+        if (results != ERROR_SUCCESS)
         {
             return false;
         }
 
         results = RegSetValueEx(hKey, AVP2_REGISTRY_COMMANDLINE, 0, REG_SZ, (LPBYTE)AVP2_DEFAULT_COMMANDLINE, strlen(AVP2_DEFAULT_COMMANDLINE) + 1);
 
-        if (results != 0)
+        if (results != ERROR_SUCCESS)
         {
             return false;
         }
 
         results = RegSetValueEx(hKey, AVP2_REGISTRY_INSTALLDIR, 0, REG_SZ, (LPBYTE)AVP2_DEFAULT_INSTALLDIR, strlen(AVP2_DEFAULT_INSTALLDIR) + 1);
 
-        if (results != 0)
+        if (results != ERROR_SUCCESS)
         {
             return false;
         }
@@ -243,14 +243,20 @@ static void SetRegistryValue(HKEY hKey, const char* pszValueName, DWORD dwType, 
 
     LONG results = RegOpenKeyEx(hKey, AVP2_USER_REGISTRY_x64, 0, KEY_WRITE | KEY_WOW64_32KEY, &hSubKey);
 
-    if (results != 0)
+    if (results != ERROR_SUCCESS)
     {
-        return;
+        //CREATE THE KEY
+        results = RegCreateKeyEx(hKey, AVP2_USER_REGISTRY_x64, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hSubKey, &dwDisposition);
+
+        if (results != ERROR_SUCCESS)
+        {
+            return;
+        }
     }
 
     results = RegSetValueEx(hSubKey, pszValueName, 0, dwType, (LPBYTE)pData, dwDataSize);
 
-    if (results != 0)
+    if (results != ERROR_SUCCESS)
     {
         return;
     }

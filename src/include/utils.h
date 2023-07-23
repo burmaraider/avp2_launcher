@@ -13,9 +13,12 @@
 #include <winerror.h>
 #include <wingdi.h>
 #include <time.h>
+#include <math.h>
 
 //Program headers
 #include "constants.h"
+#include "types.h"
+#include <GLFW/glfw3.h>
 
 #define GET_X_LPARAM(lp)    ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp)    ((int)(short)HIWORD(lp))
@@ -148,7 +151,7 @@ static void Loader_InitializeAllTextures()
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 
-    g_font = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 16, 0, 250);
+    g_font = LoadFontEx("C:\\Windows\\Fonts\\segoeui.ttf", 18, 0, 250);
 
     SetTextureFilter(g_font.texture, TEXTURE_FILTER_POINT); // Texture scale filter to use
 
@@ -370,5 +373,158 @@ static char* FormatStringWithNewLines(const char* szString, Rect rTextDrawArea)
 
     return szFormattedString;
 }
+
+static void GetModes(Monitor **mon)
+{
+    // enumerate display adapters
+    int adapterCount = 0;
+    int monitorCount = 0;
+    int modeCount = 0;
+    int adapterIndex = 0;
+    int monitorIndex = 0;
+    int modeIndex = 0;
+
+    // get number of adapters using glfwGetMonitors
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    // initialize mon array and calloc
+    mon = calloc(monitorCount, sizeof(Monitor *));
+
+    if(mon == NULL)
+    {
+        TraceLog(LOG_ERROR, "Failed to allocate memory for monitors!");
+        exit(1);
+    }
+
+    // get modes for each adapter
+    for (monitorIndex = 0; monitorIndex < monitorCount; monitorIndex++)
+    {
+        mon[monitorIndex] = calloc(1, sizeof(Monitor));
+
+        if(mon[monitorIndex] == NULL)
+        {
+            TraceLog(LOG_ERROR, "Failed to allocate memory for monitor!");
+            exit(1);
+        }
+
+        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitorIndex], &modeCount);
+        mon[monitorIndex]->modeCount = modeCount;
+
+        mon[monitorIndex]->modes = calloc(modeCount, sizeof(Mode *));
+
+        if(mon[monitorIndex]->modes == NULL)
+        {
+            TraceLog(LOG_ERROR, "Failed to allocate memory for modes!");
+            exit(1);
+        }
+
+        for (modeIndex = 0; modeIndex < modeCount; modeIndex++)
+        {
+            mon[monitorIndex]->modes[modeIndex] = calloc(1, sizeof(Mode));
+
+            if(mon[monitorIndex]->modes[modeIndex] == NULL)
+            {
+                TraceLog(LOG_ERROR, "Failed to allocate memory for mode!");
+                exit(1);
+            }
+
+            mon[monitorIndex]->modes[modeIndex]->width = modes[modeIndex].width;
+            mon[monitorIndex]->modes[modeIndex]->height = modes[modeIndex].height;
+            mon[monitorIndex]->modes[modeIndex]->refreshRate = modes[modeIndex].refreshRate;
+
+            TraceLog(LOG_INFO, "Adapter %i, Mode %i: %i x %i", monitorIndex, modeIndex, modes[modeIndex].width, modes[modeIndex].height);
+        }
+
+        // Remove duplicate and non-standard modes
+        for (modeIndex = 0; modeIndex < mon[monitorIndex]->modeCount; modeIndex++)
+        {
+            float aspectRatio = (float)mon[monitorIndex]->modes[modeIndex]->width / (float)mon[monitorIndex]->modes[modeIndex]->height;
+            const float expectedAspectRatio[] = {4.0f / 3.0f, 16.0f / 9.0f, 21.5f / 9.0f, 16.0f / 10.0f};
+            bool isExpectedAspectRatio = FALSE;
+
+            for (size_t i = 0; i < sizeof(expectedAspectRatio) / sizeof(expectedAspectRatio[0]); i++)
+            {
+                if (fabs(aspectRatio - expectedAspectRatio[i]) < 0.001f)
+                {
+                    isExpectedAspectRatio = TRUE;
+                    break;
+                }
+            }
+
+            if (!isExpectedAspectRatio)
+            {
+                // Free the memory used by the removed mode
+                free(mon[monitorIndex]->modes[modeIndex]);
+                mon[monitorIndex]->modes[modeIndex] = NULL;
+
+                // Shift the remaining modes to fill the gap
+                memmove(&mon[monitorIndex]->modes[modeIndex], &mon[monitorIndex]->modes[modeIndex + 1], (mon[monitorIndex]->modeCount - modeIndex - 1) * sizeof(Mode *));
+                mon[monitorIndex]->modeCount--;
+
+                TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed non-standard mode", monitorIndex, modeIndex);
+                modeIndex--;
+            }
+            else
+            {
+                for (size_t otherIndex = modeIndex + 1; otherIndex < mon[monitorIndex]->modeCount; otherIndex++)
+                {
+                    if (mon[monitorIndex]->modes[modeIndex]->width == mon[monitorIndex]->modes[otherIndex]->width &&
+                        mon[monitorIndex]->modes[modeIndex]->height == mon[monitorIndex]->modes[otherIndex]->height)
+                    {
+                        // Free the memory used by the removed mode
+                        free(mon[monitorIndex]->modes[otherIndex]);
+                        mon[monitorIndex]->modes[otherIndex] = NULL;
+
+                        // Shift the remaining modes to fill the gap
+                        memmove(&mon[monitorIndex]->modes[otherIndex], &mon[monitorIndex]->modes[otherIndex + 1], (mon[monitorIndex]->modeCount - otherIndex - 1) * sizeof(Mode *));
+                        mon[monitorIndex]->modeCount--;
+
+                        TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed duplicate mode", monitorIndex, otherIndex);
+                        otherIndex--;
+                    }
+                }
+            }
+        }
+    }
+
+    TraceLog(LOG_INFO, "Number of monitors: %i", monitorCount);
+}
+
+static void FreeModes(Monitor **mon)
+{
+    if (mon == NULL)
+        return;
+
+    for (size_t monitorIndex = 0; monitorIndex < 1; monitorIndex++)
+    {
+        if (mon[monitorIndex] == NULL)
+            continue;
+
+        for (size_t modeIndex = 0; modeIndex < mon[monitorIndex]->modeCount; modeIndex++)
+        {
+            if (mon[monitorIndex]->modes[modeIndex] == NULL)
+                continue;
+
+            TraceLog(LOG_INFO, "MODE: [ID %i] Unloaded Mode", modeIndex);
+            free(mon[monitorIndex]->modes[modeIndex]);
+            mon[monitorIndex]->modes[modeIndex] = NULL;
+        }
+
+        if (mon[monitorIndex]->modes != NULL)
+        {
+            TraceLog(LOG_INFO, "MONITOR: [ID %i] Freeing modes", monitorIndex);
+            free(mon[monitorIndex]->modes);
+            mon[monitorIndex]->modes = NULL;
+        }
+
+        TraceLog(LOG_INFO, "MONITOR: [ID %i] Freeing monitor", monitorIndex);
+        free(mon[monitorIndex]);
+        mon[monitorIndex] = NULL;
+    }
+
+    free(mon);
+    mon = NULL;
+}
+
 
 #endif // LOADER_H

@@ -90,6 +90,8 @@ void OKPress(Button* button)
         UnloadCheckBox(checkboxesAdvanced[i]);
     }
 
+    PlaySoundResource("OK");
+
     ScreenUpdateLoop = MainScreenUpdateLoop;
 }
 
@@ -110,6 +112,8 @@ void Cancel(Button *button)
         UnloadCheckBox(checkboxesAdvanced[i]);
     }
     
+    PlaySoundResource("BACK");
+
     ScreenUpdateLoop = MainScreenUpdateLoop;
 }
 
@@ -304,7 +308,7 @@ void RenderAdvancedScreen()
     {
         char* temp = FormatStringWithNewLines(AVP2_TOOLTIPS[nCurrentToolTip], (Rect){26, 290, 400, 300});
 
-        DrawTextExRay(g_font, temp, (Vector2){26, 290}, 16, 1, WHITE);
+        DrawTextExRay(g_font, temp, (Vector2){26, 290}, 18, 1, WHITE);
 
         free(temp);
     }
