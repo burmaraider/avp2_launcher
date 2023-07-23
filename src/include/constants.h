@@ -5,13 +5,11 @@
 #include <stdint.h>
 #include "types.h"
 
-static const uint32_t AVP2_MAIN_SCREEN_WIDTH = 525;
-static const uint32_t AVP2_MAIN_SCREEN_HEIGHT = 245;
-
 #define IDI_APPICON                     101
 #define IDS_APPNAME                     1
 
-static const char* const TEST = "This restores all configuration settings to the original defaults. This includes resetting the key configuration, detail level and sound options. This is useful if you've changed settings, and you just want things back the way they were. ";
+static const uint32_t AVP2_MAIN_SCREEN_WIDTH = 525;
+static const uint32_t AVP2_MAIN_SCREEN_HEIGHT = 245;
 
 static const char* const AVP2_REGISTRY_x64 = "SOFTWARE\\Monolith Productions\\Aliens vs. Predator 2\\1.0";
 static const char* const AVP2_USER_REGISTRY_x64 = "Software\\Classes\\VirtualStore\\MACHINE\\SOFTWARE\\WOW6432Node\\Monolith Productions\\Aliens vs. Predator 2\\1.0";
@@ -43,22 +41,12 @@ extern char* g_pszCommandLine;
 extern char* g_pszInstallDir;
 extern bool g_bAVP2Installed;
 extern LauncherSettings g_Settings;
+extern uint32_t g_nCurrentScreen;
+extern Font g_font;
+extern Texture g_backgroundImage[6];
 
-extern Button g_playButton;
-extern Button g_serverButton;
-extern Button g_displayButton;
-extern Button g_optionsButton;
-extern Button g_exitButton;
-extern Button g_minimizeButton;
-extern Button g_xButton;
-extern Button g_installButton;
-
-// generic
-extern Button g_okButton;
-extern Button g_cancelButton;
-
-static const uint32_t BUTTON_COUNT = 10;
-extern Button** g_buttons;
+static const uint32_t SPLASH_BUTTON_COUNT = 10;
+static const uint32_t ADVANCED_BUTTON_COUNT = 3;
 static const uint32_t CHECK_COUNT = 7;
 
 static const char* const AVP2_TOOLTIPS[8] = {
@@ -72,14 +60,8 @@ static const char* const AVP2_TOOLTIPS[8] = {
 ,"This will disable the use of a hardware cursor. Some older cards do not support the hardware cursor."
 };
 
-extern uint32_t g_nCurrentScreen;
-extern Font g_font;
-extern Texture g_backgroundImage[6];
-
-extern void (*Screen)(void);
+extern void (*ScreenRenderLoop)(void);
 extern void (*ScreenUpdateLoop)(void);
-extern void DefaultScreen(void);
-extern void MainScreenUpdateLoop(void);
 extern void ButtonPressCallback(Button *button);
 
 #endif // _CONSTANTS_H_

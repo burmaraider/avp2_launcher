@@ -8,10 +8,8 @@
 #include "..\types.h"
 #include "..\constants.h"
 
-void SetupScreenSplash();
-void SetCallbacksSplashScreen(Button *button);
-void RenderSplashScreen();
-void CheckAllButtons();
+void SplashSetupScreen();
+void SplashScreenRender();
 void SplashUpdateLoop();
 
 #endif //SPLASH_H

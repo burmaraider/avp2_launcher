@@ -1,19 +1,22 @@
 #ifndef LOADER_H
 #define LOADER_H
+
+//Windows headers
 #include <Windows.h>
-#include "raylib.h"
-
-
-//C headers
-#include <stdint.h>
-#include <stdlib.h>
-#include "string.h"
-
 #include <shellscalingapi.h>    //used to get DPI scaling
 #include <winerror.h>
 #include <wingdi.h>
 #include <time.h>
 #include <math.h>
+
+//raylib headers
+#include "raylib.h"
+#include "raymath.h"
+
+//C headers
+#include <stdint.h>
+#include <stdlib.h>
+#include "string.h"
 
 //Program headers
 #include "constants.h"
@@ -110,7 +113,7 @@ static void LoadBackgroundImages()
     }
 }
 
-static void LoadTextureFromResource(Texture *texture, const char *name)
+static void LoadTextureFromResource(Texture *pTexture, const char *name)
 {
     HMODULE hInst = GetModuleHandle(NULL);
 
@@ -135,14 +138,14 @@ static void LoadTextureFromResource(Texture *texture, const char *name)
     // convert bitmap to image
     Image iImage = LoadImageFromMemory(".bmp", pData, nFileSizeLessHeader + sizeof(BITMAPFILEHEADER));
 
-    *texture = LoadTextureFromImage(iImage);
+    *pTexture = LoadTextureFromImage(iImage);
     UnloadImage(iImage);
     UnlockResource(hGlobal);
     FreeResource(hGlobal);
     free(pData);
 }
 
-static void Loader_InitializeAllTextures()
+static void Loader_InitializeBackgroundTextures()
 {
     //Set the window icon
     HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON));
@@ -157,151 +160,9 @@ static void Loader_InitializeAllTextures()
 
     LoadBackgroundImages();
 
-    // play button
-    LoadTextureFromResource(&g_playButton.texture[0], "PLAYU");
-    LoadTextureFromResource(&g_playButton.texture[1], "PLAYF");
-    LoadTextureFromResource(&g_playButton.texture[2], "PLAYD");
-    g_playButton.position = (Vector2){417, 19};
-    g_playButton.onPress = ButtonPressCallback;
-    g_playButton.onUnload = UnloadButton;
-    g_playButton.isEnabled = TRUE;
-    strcpy(g_playButton.szName, "play");
-
-    // server button
-    LoadTextureFromResource(&g_serverButton.texture[0], "SERVERU");
-    LoadTextureFromResource(&g_serverButton.texture[1], "SERVERF");
-    LoadTextureFromResource(&g_serverButton.texture[2], "SERVERD");
-    g_serverButton.position = (Vector2){417, 55};
-    g_serverButton.onPress = ButtonPressCallback;
-    g_serverButton.onUnload = UnloadButton;
-    g_serverButton.isEnabled = TRUE;
-    strcpy(g_serverButton.szName, "server");
-
-    // display button
-    LoadTextureFromResource(&g_displayButton.texture[0], "DISPLAYU");
-    LoadTextureFromResource(&g_displayButton.texture[1], "DISPLAYF");
-    LoadTextureFromResource(&g_displayButton.texture[2], "DISPLAYD");
-    g_displayButton.position = (Vector2){417, 91};
-    g_displayButton.onPress = ButtonPressCallback;
-    g_displayButton.onUnload = UnloadButton;
-    g_displayButton.isEnabled = TRUE;
-    strcpy(g_displayButton.szName, "display");
-
-    // options button
-    LoadTextureFromResource(&g_optionsButton.texture[0], "OPTIONSU");
-    LoadTextureFromResource(&g_optionsButton.texture[1], "OPTIONSF");
-    LoadTextureFromResource(&g_optionsButton.texture[2], "OPTIONSD");
-    g_optionsButton.position = (Vector2){417, 127};
-    g_optionsButton.onPress = ButtonPressCallback;
-    g_optionsButton.onUnload = UnloadButton;
-    g_optionsButton.isEnabled = TRUE;
-    strcpy(g_optionsButton.szName, "options");
-
-    // exit button
-    LoadTextureFromResource(&g_exitButton.texture[0], "QUITU");
-    LoadTextureFromResource(&g_exitButton.texture[1], "QUITF");
-    LoadTextureFromResource(&g_exitButton.texture[2], "QUITD");
-    g_exitButton.position = (Vector2){417, 199};
-    g_exitButton.onPress = ButtonPressCallback;
-    g_exitButton.onUnload = UnloadButton;
-    g_exitButton.isEnabled = TRUE;
-    strcpy(g_exitButton.szName, "exit");
-
-    // minimize button
-    LoadTextureFromResource(&g_minimizeButton.texture[0], "MINIMIZEU");
-    LoadTextureFromResource(&g_minimizeButton.texture[1], "MINIMIZEF");
-    LoadTextureFromResource(&g_minimizeButton.texture[2], "MINIMIZED");
-    g_minimizeButton.position = (Vector2){485, 1};
-    g_minimizeButton.onPress = ButtonPressCallback;
-    g_minimizeButton.onUnload = UnloadButton;
-    g_minimizeButton.isEnabled = TRUE;
-    strcpy(g_minimizeButton.szName, "minimize");
-
-    // x button
-    LoadTextureFromResource(&g_xButton.texture[0], "CLOSEU");
-    LoadTextureFromResource(&g_xButton.texture[1], "CLOSEF");
-    LoadTextureFromResource(&g_xButton.texture[2], "CLOSED");
-    g_xButton.position = (Vector2){505, 1};
-    g_xButton.onPress = ButtonPressCallback;
-    g_xButton.onUnload = UnloadButton;
-    g_xButton.isEnabled = TRUE;
-    strcpy(g_xButton.szName, "x");
-
-    // generic
-    LoadTextureFromResource(&g_okButton.texture[0], "OKU");
-    LoadTextureFromResource(&g_okButton.texture[1], "OKF");
-    LoadTextureFromResource(&g_okButton.texture[2], "OKD");
-    g_okButton.position = (Vector2){0, 0};
-    g_okButton.onPress = ButtonPressCallback;
-    g_okButton.onUnload = UnloadButton;
-    g_okButton.isEnabled = TRUE;
-    strcpy(g_okButton.szName, "ok");
-
-    LoadTextureFromResource(&g_cancelButton.texture[0], "CANCELU");
-    LoadTextureFromResource(&g_cancelButton.texture[1], "CANCELF");
-    LoadTextureFromResource(&g_cancelButton.texture[2], "CANCELD");
-    g_cancelButton.position = (Vector2){0, 0};
-    g_cancelButton.onPress = ButtonPressCallback;
-    g_cancelButton.onUnload = UnloadButton;
-    g_cancelButton.isEnabled = TRUE;
-    strcpy(g_cancelButton.szName, "cancel");
-
-    LoadTextureFromResource(&g_installButton.texture[0], "INSTALLU");
-    LoadTextureFromResource(&g_installButton.texture[1], "INSTALLF");
-    LoadTextureFromResource(&g_installButton.texture[2], "INSTALLD");
-    g_installButton.position = (Vector2){417, 19};
-    g_installButton.onPress = ButtonPressCallback;
-    g_installButton.onUnload = UnloadButton;
-    strcpy(g_installButton.szName, "install");
-
-
-    //InstallAVP2Registry
-
-    g_buttons = (Button **)malloc(sizeof(Button *) * BUTTON_COUNT);
-
-    if (!g_buttons)
-    {
-        MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
-        exit(1);
-    }
-
-    for (size_t i = 0; i < BUTTON_COUNT; i++)
-    {
-        g_buttons[i] = (Button *)malloc(sizeof(Button));
-        
-        if (!g_buttons[i])
-        {
-            MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
-            exit(1);
-        }
-    }
-
-    g_buttons[0] = &g_playButton;
-    g_buttons[1] = &g_serverButton;
-    g_buttons[2] = &g_displayButton;
-    g_buttons[3] = &g_optionsButton;
-    g_buttons[4] = &g_exitButton;
-    g_buttons[5] = &g_minimizeButton;
-    g_buttons[6] = &g_xButton;
-    g_buttons[7] = &g_okButton;
-    g_buttons[8] = &g_cancelButton;
-    g_buttons[9] = &g_installButton;
-
-    if(g_bAVP2Installed)
-    {
-        g_installButton.isEnabled = FALSE;
-    }
-    else
-    {
-        g_installButton.isEnabled = TRUE;
-        g_playButton.isEnabled = FALSE;
-        g_serverButton.isEnabled = FALSE;
-        g_displayButton.isEnabled = FALSE;
-        g_optionsButton.isEnabled = FALSE;
-    }
 }
 
-static bool win32_SetProcessDpiAware(void) {
+static bool SetProcessDpiAware(void) {
     HMODULE shcore = LoadLibraryA("Shcore.dll");
     SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
     if (shcore) {
@@ -374,7 +235,7 @@ static char* FormatStringWithNewLines(const char* szString, Rect rTextDrawArea)
     return szFormattedString;
 }
 
-static void GetModes(Monitor **mon)
+static void GetModes(Monitor **pMonitorArray)
 {
     // enumerate display adapters
     int adapterCount = 0;
@@ -388,9 +249,9 @@ static void GetModes(Monitor **mon)
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
     // initialize mon array and calloc
-    mon = calloc(monitorCount, sizeof(Monitor *));
+    pMonitorArray = calloc(monitorCount, sizeof(Monitor *));
 
-    if(mon == NULL)
+    if(pMonitorArray == NULL)
     {
         TraceLog(LOG_ERROR, "Failed to allocate memory for monitors!");
         exit(1);
@@ -399,20 +260,20 @@ static void GetModes(Monitor **mon)
     // get modes for each adapter
     for (monitorIndex = 0; monitorIndex < monitorCount; monitorIndex++)
     {
-        mon[monitorIndex] = calloc(1, sizeof(Monitor));
+        pMonitorArray[monitorIndex] = calloc(1, sizeof(Monitor));
 
-        if(mon[monitorIndex] == NULL)
+        if(pMonitorArray[monitorIndex] == NULL)
         {
             TraceLog(LOG_ERROR, "Failed to allocate memory for monitor!");
             exit(1);
         }
 
         const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitorIndex], &modeCount);
-        mon[monitorIndex]->modeCount = modeCount;
+        pMonitorArray[monitorIndex]->modeCount = modeCount;
 
-        mon[monitorIndex]->modes = calloc(modeCount, sizeof(Mode *));
+        pMonitorArray[monitorIndex]->modes = calloc(modeCount, sizeof(Mode *));
 
-        if(mon[monitorIndex]->modes == NULL)
+        if(pMonitorArray[monitorIndex]->modes == NULL)
         {
             TraceLog(LOG_ERROR, "Failed to allocate memory for modes!");
             exit(1);
@@ -420,25 +281,25 @@ static void GetModes(Monitor **mon)
 
         for (modeIndex = 0; modeIndex < modeCount; modeIndex++)
         {
-            mon[monitorIndex]->modes[modeIndex] = calloc(1, sizeof(Mode));
+            pMonitorArray[monitorIndex]->modes[modeIndex] = calloc(1, sizeof(Mode));
 
-            if(mon[monitorIndex]->modes[modeIndex] == NULL)
+            if(pMonitorArray[monitorIndex]->modes[modeIndex] == NULL)
             {
                 TraceLog(LOG_ERROR, "Failed to allocate memory for mode!");
                 exit(1);
             }
 
-            mon[monitorIndex]->modes[modeIndex]->width = modes[modeIndex].width;
-            mon[monitorIndex]->modes[modeIndex]->height = modes[modeIndex].height;
-            mon[monitorIndex]->modes[modeIndex]->refreshRate = modes[modeIndex].refreshRate;
+            pMonitorArray[monitorIndex]->modes[modeIndex]->width = modes[modeIndex].width;
+            pMonitorArray[monitorIndex]->modes[modeIndex]->height = modes[modeIndex].height;
+            pMonitorArray[monitorIndex]->modes[modeIndex]->refreshRate = modes[modeIndex].refreshRate;
 
             TraceLog(LOG_INFO, "Adapter %i, Mode %i: %i x %i", monitorIndex, modeIndex, modes[modeIndex].width, modes[modeIndex].height);
         }
 
         // Remove duplicate and non-standard modes
-        for (modeIndex = 0; modeIndex < mon[monitorIndex]->modeCount; modeIndex++)
+        for (modeIndex = 0; modeIndex < pMonitorArray[monitorIndex]->modeCount; modeIndex++)
         {
-            float aspectRatio = (float)mon[monitorIndex]->modes[modeIndex]->width / (float)mon[monitorIndex]->modes[modeIndex]->height;
+            float aspectRatio = (float)pMonitorArray[monitorIndex]->modes[modeIndex]->width / (float)pMonitorArray[monitorIndex]->modes[modeIndex]->height;
             const float expectedAspectRatio[] = {4.0f / 3.0f, 16.0f / 9.0f, 21.5f / 9.0f, 16.0f / 10.0f};
             bool isExpectedAspectRatio = FALSE;
 
@@ -454,30 +315,30 @@ static void GetModes(Monitor **mon)
             if (!isExpectedAspectRatio)
             {
                 // Free the memory used by the removed mode
-                free(mon[monitorIndex]->modes[modeIndex]);
-                mon[monitorIndex]->modes[modeIndex] = NULL;
+                free(pMonitorArray[monitorIndex]->modes[modeIndex]);
+                pMonitorArray[monitorIndex]->modes[modeIndex] = NULL;
 
                 // Shift the remaining modes to fill the gap
-                memmove(&mon[monitorIndex]->modes[modeIndex], &mon[monitorIndex]->modes[modeIndex + 1], (mon[monitorIndex]->modeCount - modeIndex - 1) * sizeof(Mode *));
-                mon[monitorIndex]->modeCount--;
+                memmove(&pMonitorArray[monitorIndex]->modes[modeIndex], &pMonitorArray[monitorIndex]->modes[modeIndex + 1], (pMonitorArray[monitorIndex]->modeCount - modeIndex - 1) * sizeof(Mode *));
+                pMonitorArray[monitorIndex]->modeCount--;
 
                 TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed non-standard mode", monitorIndex, modeIndex);
                 modeIndex--;
             }
             else
             {
-                for (size_t otherIndex = modeIndex + 1; otherIndex < mon[monitorIndex]->modeCount; otherIndex++)
+                for (size_t otherIndex = modeIndex + 1; otherIndex < pMonitorArray[monitorIndex]->modeCount; otherIndex++)
                 {
-                    if (mon[monitorIndex]->modes[modeIndex]->width == mon[monitorIndex]->modes[otherIndex]->width &&
-                        mon[monitorIndex]->modes[modeIndex]->height == mon[monitorIndex]->modes[otherIndex]->height)
+                    if (pMonitorArray[monitorIndex]->modes[modeIndex]->width == pMonitorArray[monitorIndex]->modes[otherIndex]->width &&
+                        pMonitorArray[monitorIndex]->modes[modeIndex]->height == pMonitorArray[monitorIndex]->modes[otherIndex]->height)
                     {
                         // Free the memory used by the removed mode
-                        free(mon[monitorIndex]->modes[otherIndex]);
-                        mon[monitorIndex]->modes[otherIndex] = NULL;
+                        free(pMonitorArray[monitorIndex]->modes[otherIndex]);
+                        pMonitorArray[monitorIndex]->modes[otherIndex] = NULL;
 
                         // Shift the remaining modes to fill the gap
-                        memmove(&mon[monitorIndex]->modes[otherIndex], &mon[monitorIndex]->modes[otherIndex + 1], (mon[monitorIndex]->modeCount - otherIndex - 1) * sizeof(Mode *));
-                        mon[monitorIndex]->modeCount--;
+                        memmove(&pMonitorArray[monitorIndex]->modes[otherIndex], &pMonitorArray[monitorIndex]->modes[otherIndex + 1], (pMonitorArray[monitorIndex]->modeCount - otherIndex - 1) * sizeof(Mode *));
+                        pMonitorArray[monitorIndex]->modeCount--;
 
                         TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed duplicate mode", monitorIndex, otherIndex);
                         otherIndex--;
@@ -526,5 +387,31 @@ static void FreeModes(Monitor **mon)
     mon = NULL;
 }
 
+static void DragWindow()
+{
+    static Vector2 initialMousePosition = {0, 0};
+    static bool bIsDragging = FALSE;
+
+    // Check if user is dragging the window
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && GetMousePosition().y < 16 && GetMousePosition().x < GetScreenWidth() - 40)
+    {
+        bIsDragging = TRUE;
+        initialMousePosition = GetMousePosition();
+    }
+    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+    {
+        bIsDragging = FALSE;
+    }
+
+    // Move the window if user is dragging it
+    if (bIsDragging)
+    {
+        Vector2 mousePosition = GetMousePosition();
+        Vector2 windowPosition = GetWindowPosition();
+        Vector2 screenPosition = Vector2Add(mousePosition, windowPosition);
+        // Set the new window position
+        SetWindowPosition((int)screenPosition.x - initialMousePosition.x, (int)screenPosition.y - initialMousePosition.y);
+    }
+}
 
 #endif // LOADER_H

@@ -1,46 +1,56 @@
 #include "raylib.h"
 #include <string.h>
 
-
+//Windows Headers
 #include <richedit.h>
 
+//Program Headers
 #include "..\include\registry.h"
 #include "..\include\utils.h"
 #include "..\include\Screens\advanced.h"
 
-//Win32 TextBox
-HWND g_hWnd;
-HWND hwndTextBox;
-WNDPROC oldTextBoxProc;
+//Win32 Stuff
+static HWND g_hWnd;
+static HWND hwndTextBox;
 
-Checkbox saveCommands;
-Checkbox disableMovies;
-Checkbox disableSound;
-Checkbox disableMusic;
-Checkbox disableMovies;
-Checkbox disableJoystick;
-Checkbox disableFog;
-Checkbox disableHardwareCursor;
-Checkbox disableTripleBuffering;
-Checkbox restoreDefaultSettings;
-Checkbox** checkboxesAdvanced;
+//CHECKBOXES
+static Checkbox saveCommands;
+static Checkbox disableMovies;
+static Checkbox disableSound;
+static Checkbox disableMusic;
+static Checkbox disableMovies;
+static Checkbox disableJoystick;
+static Checkbox disableFog;
+static Checkbox disableHardwareCursor;
+static Checkbox disableTripleBuffering;
+static Checkbox restoreDefaultSettings;
+static Checkbox** checkboxesAdvanced;
 
-bool bIsMouseHoveringOverTextBox = false;
-uint32_t nCurrentToolTip = 0;
+//BUTTONS
+static Button xButton;
+static Button okButton;
+static Button cancelButton;
+static Button **buttons;
 
+//LOCAL VARIABLES
+static uint32_t nCurrentToolTip = 0;
 
-void CheckBoxHover(Checkbox *checkbox)
+// Function pointers for the original render and update loops
+static void *pOldRenderLoop;
+static void *pOldUpdateLoop;
+
+static void CheckBoxHover(Checkbox *checkbox)
 {
     nCurrentToolTip = checkbox->id;
 }
 
-void CheckboxPress(Checkbox *checkbox)
+static void CheckboxPress(Checkbox *checkbox)
 {
     checkbox->isChecked = !checkbox->isChecked;
     PlaySoundResource("OK");
 }
 
-void SaveSettingsToRegistry()
+static void SaveSettingsToRegistry()
 {
 
     DWORD nDisableHardwareCursor = (DWORD)g_Settings.nDisableHardwareCursor;
@@ -61,7 +71,7 @@ void SaveSettingsToRegistry()
     SetRegistryValue(HKEY_CURRENT_USER, "Commands", REG_SZ, g_Settings.szCommands, strlen(g_Settings.szCommands));
 }
 
-void OKPress(Button* button)
+static void OnButtonPressOK(Button* button)
 {
     g_Settings.nSaveCommands = saveCommands.isChecked;
     g_Settings.nDisableSound = disableSound.isChecked;
@@ -79,10 +89,7 @@ void OKPress(Button* button)
 
     //SaveSettings();
     g_nCurrentScreen = 0;
-    Screen = DefaultScreen;
     SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
-    g_xButton.onPress = ButtonPressCallback;
-    g_xButton.position = (Vector2){ 505, 1 };
     
     //free textures
     for (size_t i = 0; i < CHECK_COUNT; i++)
@@ -92,16 +99,16 @@ void OKPress(Button* button)
 
     PlaySoundResource("OK");
 
-    ScreenUpdateLoop = MainScreenUpdateLoop;
+    ScreenUpdateLoop = pOldUpdateLoop;
+    ScreenRenderLoop = pOldRenderLoop;
 }
 
-void Cancel(Button *button)
+static void OnButtonPressCancel(Button *button)
 {
     g_nCurrentScreen = 0;
-    Screen = DefaultScreen;
     SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
-    g_xButton.onPress = ButtonPressCallback;
-    g_xButton.position = (Vector2){ 505, 1 };
+    xButton.onPress = ButtonPressCallback;
+    xButton.position = (Vector2){ 505, 1 };
 
     //hide hwndTextBox
     ShowWindow(hwndTextBox, SW_HIDE);
@@ -114,10 +121,11 @@ void Cancel(Button *button)
     
     PlaySoundResource("BACK");
 
-    ScreenUpdateLoop = MainScreenUpdateLoop;
+    ScreenUpdateLoop = pOldUpdateLoop;
+    ScreenRenderLoop = pOldRenderLoop;
 }
 
-void SetupCheckBoxesState()
+static void SetupCheckBoxesState()
 {
     saveCommands.isChecked = g_Settings.nSaveCommands;
     disableSound.isChecked = g_Settings.nDisableSound;
@@ -128,9 +136,17 @@ void SetupCheckBoxesState()
     disableHardwareCursor.isChecked = g_Settings.nDisableHardwareCursor;
 }
 
-void SetupScreenAdvanced()
+void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
 {
-    win32_SetProcessDpiAware();
+    //save old render and update loops
+    pOldRenderLoop = pRenderLoop;
+    pOldUpdateLoop = pUpdateLoop;
+
+    //set new render and update loops so our main loop is happy
+    ScreenRenderLoop = OptionsRenderScreen;
+    ScreenUpdateLoop = OptionsUpdateLoop;
+
+    SetProcessDpiAware();
 
     g_hWnd = GetWindowHandle();
 
@@ -182,13 +198,6 @@ void SetupScreenAdvanced()
 
 
     SetWindowSize(456, 431);
-
-    g_okButton.position = (Vector2){ 123, 386 };
-    g_okButton.onPress = OKPress;
-
-    g_cancelButton.position = (Vector2){ 235, 386 };
-    g_xButton.position = (Vector2){ 435, 1 };
-
 
     //setup checkboxes
     saveCommands.position = (Vector2){ 26, 246 };
@@ -247,8 +256,6 @@ void SetupScreenAdvanced()
     disableHardwareCursor.onHover = CheckBoxHover;
     disableHardwareCursor.id = 7;
 
-
-
     checkboxesAdvanced = (Checkbox **)malloc(sizeof(Checkbox *) * CHECK_COUNT);
 
     if (!checkboxesAdvanced)
@@ -278,22 +285,69 @@ void SetupScreenAdvanced()
 
     SetupCheckBoxesState();
 
+    // x button
+    LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
+    LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
+    LoadTextureFromResource(&xButton.texture[2], "CLOSED");
+    xButton.position = (Vector2){505, 1};
+    xButton.onPress = ButtonPressCallback;
+    xButton.onUnload = UnloadButton;
+    xButton.isEnabled = TRUE;
+    strcpy(xButton.szName, "x");
+
+     // generic
+    LoadTextureFromResource(&okButton.texture[0], "OKU");
+    LoadTextureFromResource(&okButton.texture[1], "OKF");
+    LoadTextureFromResource(&okButton.texture[2], "OKD");
+    okButton.position = (Vector2){ 123, 386 };
+    okButton.onPress = OnButtonPressOK;
+    okButton.onUnload = UnloadButton;
+    okButton.isEnabled = TRUE;
+    strcpy(okButton.szName, "ok");
+
+    LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
+    LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
+    LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
+    cancelButton.position = (Vector2){ 235, 386 };
+    cancelButton.onPress = OnButtonPressCancel;
+    cancelButton.onUnload = UnloadButton;
+    cancelButton.isEnabled = TRUE;
+    strcpy(cancelButton.szName, "cancel");
+
+    //seTUP BUTTONS
+    buttons = (Button **)malloc(sizeof(Button *) * 3);
+
+    if(!buttons)
+    {
+        MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
+        exit(1);
+    }
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        buttons[i] = (Button *)malloc(sizeof(Button));
+        
+        if(!buttons[i])
+        {
+            MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
+            exit(1);
+        }
+    }
+
+    buttons[0] = &okButton;
+    buttons[1] = &cancelButton;
+    buttons[2] = &xButton;
+
 }
 
-void SetCallbacksAdvancedScreen(Button *button)
-{
-    button->onPress = Cancel;
-}
 
-
-void RenderAdvancedScreen()
+void OptionsRenderScreen()
 {
     DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
-    DrawTexture(g_okButton.texture[g_okButton.currentTexture], g_okButton.position.x, g_okButton.position.y, WHITE);
-    DrawTexture(g_cancelButton.texture[g_cancelButton.currentTexture], g_cancelButton.position.x, g_cancelButton.position.y, WHITE);
-
-    DrawTexture(g_xButton.texture[g_xButton.currentTexture], g_xButton.position.x, g_xButton.position.y, WHITE);
+    DrawTexture(okButton.texture[okButton.currentTexture], okButton.position.x, okButton.position.y, WHITE);
+    DrawTexture(cancelButton.texture[cancelButton.currentTexture], cancelButton.position.x, cancelButton.position.y, WHITE);
+    DrawTexture(xButton.texture[xButton.currentTexture], xButton.position.x, xButton.position.y, WHITE);
 
     //Draw checkboxes
     DrawTexture(saveCommands.texture[saveCommands.isChecked], saveCommands.position.x, saveCommands.position.y, WHITE);
@@ -316,7 +370,7 @@ void RenderAdvancedScreen()
 }
 
 
-void CheckAllCheckBoxes()
+static void CheckAllCheckBoxes()
 {
     for (size_t i = 0; i < CHECK_COUNT; i++)
     {
@@ -337,13 +391,43 @@ void CheckAllCheckBoxes()
         }
         else
         {
-            g_buttons[i]->currentTexture = UP;
+            checkboxesAdvanced[i]->currentTexture = UP;
         }
     }
 }
 
-void AdvancedUpdateLoop()
+static void CheckAllButtons()
+{
+    for (size_t i = 0; i < ADVANCED_BUTTON_COUNT; i++)
+    {
+        if (CheckCollisionPointRec(GetMousePosition(), (Rect){buttons[i]->position.x, buttons[i]->position.y, buttons[i]->texture[0].width, buttons[i]->texture[0].height})
+        && buttons[i]->isEnabled == TRUE)
+        {
+            buttons[i]->currentTexture = HOVER;
+
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                buttons[i]->currentTexture = DOWN;
+                
+            }
+
+            if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            {
+                buttons[i]->currentTexture = HOVER;
+                buttons[i]->onPress(buttons[i]);
+            }
+        }
+        else
+        {
+            buttons[i]->currentTexture = UP;
+            buttons[i]->isPressed = FALSE;
+        }
+    }
+}
+
+void OptionsUpdateLoop()
 {
     nCurrentToolTip = 0;
+    CheckAllButtons();
     CheckAllCheckBoxes();
 }

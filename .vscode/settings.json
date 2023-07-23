@@ -71,7 +71,9 @@
         "winerror.h": "c",
         "loader.h": "c",
         "registry.h": "c",
-        "shellscalingapi.h": "c"
+        "shellscalingapi.h": "c",
+        "splash.h": "c",
+        "string.h": "c"
     },
     "cmake.preferredGenerators": [
         "Ninja"

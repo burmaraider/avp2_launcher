@@ -1,5 +1,5 @@
-#ifndef ADVANCED_H
-#define ADVANCED_H
+#ifndef OPTIONS_H
+#define OPTIONS_H
 
 #include "raylib.h"
 #include <stdlib.h>
@@ -8,10 +8,8 @@
 #include "..\types.h"
 #include "..\constants.h"
 
-void SetupScreenAdvanced();
-void SetCallbacksAdvancedScreen(Button *button);
-void RenderAdvancedScreen();
-void CheckAllCheckBoxes();
-void AdvancedUpdateLoop();
+void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop);
+void OptionsRenderScreen();
+void OptionsUpdateLoop();
 
 #endif

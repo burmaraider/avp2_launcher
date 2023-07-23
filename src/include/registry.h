@@ -243,13 +243,16 @@ static void SetRegistryValue(HKEY hKey, const char* pszValueName, DWORD dwType, 
 
     LONG results = RegOpenKeyEx(hKey, AVP2_USER_REGISTRY_x64, 0, KEY_WRITE | KEY_WOW64_32KEY, &hSubKey);
 
+    //if the key doesn't exist, create it
     if (results != ERROR_SUCCESS)
     {
         //CREATE THE KEY
         results = RegCreateKeyEx(hKey, AVP2_USER_REGISTRY_x64, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hSubKey, &dwDisposition);
 
+        //if we failed to create the key, return
         if (results != ERROR_SUCCESS)
         {
+            MessageBox(NULL, "Failed to create registry key!", "Error", MB_OK | MB_ICONERROR);
             return;
         }
     }
@@ -258,6 +261,7 @@ static void SetRegistryValue(HKEY hKey, const char* pszValueName, DWORD dwType, 
 
     if (results != ERROR_SUCCESS)
     {
+        MessageBox(NULL, "Failed to set registry value!", "Error", MB_OK | MB_ICONERROR);
         return;
     }
 
