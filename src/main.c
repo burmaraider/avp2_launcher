@@ -17,7 +17,6 @@
 #include "include\Screens\splash.h"
 #include "include\Screens\advanced.h"
 
-void InitGame(void);
 bool bShouldClose = FALSE;
 
 /// GLOBAL DELCARATIONS
