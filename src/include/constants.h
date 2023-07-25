@@ -10,6 +10,7 @@
 
 #define SCREEN_SPLASH 0
 #define SCREEN_OPTIONS 1
+#define SCREEN_DISPLAY 2
 
 static const uint32_t AVP2_MAIN_SCREEN_WIDTH = 525;
 static const uint32_t AVP2_MAIN_SCREEN_HEIGHT = 245;
@@ -49,8 +50,10 @@ extern Font g_font;
 extern Texture g_backgroundImage[6];
 
 static const uint32_t SPLASH_BUTTON_COUNT = 10;
-static const uint32_t ADVANCED_BUTTON_COUNT = 3;
-static const uint32_t CHECK_COUNT = 7;
+static const uint32_t OPTIONS_BUTTON_COUNT = 3;
+static const uint32_t DISPLAY_BUTTON_COUNT = 3;
+static const uint32_t OPTIONS_CHECKBOX_COUNT = 7;
+
 
 static const char* const AVP2_TOOLTIPS[8] = {
 "What the hell am I looking at here?!"

@@ -36,7 +36,7 @@ void SplashSetupScreen()
     playButton.onPress = ButtonPressCallback;
     playButton.onUnload = UnloadButton;
     playButton.isEnabled = TRUE;
-    strcpy(playButton.szName, "play");
+    playButton.id = BUTTON_PLAY;
 
     // server button
     LoadTextureFromResource(&serverButton.texture[0], "SERVERU");
@@ -46,7 +46,7 @@ void SplashSetupScreen()
     serverButton.onPress = ButtonPressCallback;
     serverButton.onUnload = UnloadButton;
     serverButton.isEnabled = TRUE;
-    strcpy(serverButton.szName, "server");
+    serverButton.id = BUTTON_SERVER;
 
     // display button
     LoadTextureFromResource(&displayButton.texture[0], "DISPLAYU");
@@ -56,7 +56,7 @@ void SplashSetupScreen()
     displayButton.onPress = ButtonPressCallback;
     displayButton.onUnload = UnloadButton;
     displayButton.isEnabled = TRUE;
-    strcpy(displayButton.szName, "display");
+    displayButton.id = BUTTON_DISPLAY;
 
     // options button
     LoadTextureFromResource(&optionsButton.texture[0], "OPTIONSU");
@@ -66,7 +66,7 @@ void SplashSetupScreen()
     optionsButton.onPress = ButtonPressCallback;
     optionsButton.onUnload = UnloadButton;
     optionsButton.isEnabled = TRUE;
-    strcpy(optionsButton.szName, "options");
+    optionsButton.id = BUTTON_OPTIONS;
 
     // exit button
     LoadTextureFromResource(&exitButton.texture[0], "QUITU");
@@ -76,7 +76,7 @@ void SplashSetupScreen()
     exitButton.onPress = ButtonPressCallback;
     exitButton.onUnload = UnloadButton;
     exitButton.isEnabled = TRUE;
-    strcpy(exitButton.szName, "exit");
+    exitButton.id = BUTTON_EXIT;
 
     // minimize button
     LoadTextureFromResource(&minimizeButton.texture[0], "MINIMIZEU");
@@ -86,7 +86,7 @@ void SplashSetupScreen()
     minimizeButton.onPress = ButtonPressCallback;
     minimizeButton.onUnload = UnloadButton;
     minimizeButton.isEnabled = TRUE;
-    strcpy(minimizeButton.szName, "minimize");
+    minimizeButton.id = BUTTON_MINIMIZE;
 
     // x button
     LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
@@ -96,7 +96,7 @@ void SplashSetupScreen()
     xButton.onPress = ButtonPressCallback;
     xButton.onUnload = UnloadButton;
     xButton.isEnabled = TRUE;
-    strcpy(xButton.szName, "x");
+    xButton.id = BUTTON_X;
 
     // generic
     LoadTextureFromResource(&okButton.texture[0], "OKU");
@@ -106,7 +106,7 @@ void SplashSetupScreen()
     okButton.onPress = ButtonPressCallback;
     okButton.onUnload = UnloadButton;
     okButton.isEnabled = TRUE;
-    strcpy(okButton.szName, "ok");
+    okButton.id = BUTTON_OK;
 
     LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
     LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
@@ -115,7 +115,7 @@ void SplashSetupScreen()
     cancelButton.onPress = ButtonPressCallback;
     cancelButton.onUnload = UnloadButton;
     cancelButton.isEnabled = TRUE;
-    strcpy(cancelButton.szName, "cancel");
+    cancelButton.id = BUTTON_CANCEL;
 
     LoadTextureFromResource(&installButton.texture[0], "INSTALLU");
     LoadTextureFromResource(&installButton.texture[1], "INSTALLF");
@@ -123,7 +123,7 @@ void SplashSetupScreen()
     installButton.position = (Vector2){417, 19};
     installButton.onPress = ButtonPressCallback;
     installButton.onUnload = UnloadButton;
-    strcpy(installButton.szName, "install");
+    installButton.id = BUTTON_INSTALL;
 
     buttons = (Button **)malloc(sizeof(Button *) * SPLASH_BUTTON_COUNT);
 

@@ -17,7 +17,7 @@
 #include "include\Screens\splash.h"
 #include "include\Screens\advanced.h"
 
-bool bShouldClose = FALSE;
+bool bShouldClose = false;
 
 /// GLOBAL DELCARATIONS
 uint32_t g_nCurrentScreen = 0;
@@ -121,42 +121,62 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+//There are better ways to do this, but this is the easiest way to do it.
 void ButtonPressCallback(Button *button)
 {
     PlaySoundResource("OK");
 
-    if (strcmp(button->szName, "play") == 0)
+    switch(button->id)
     {
-        g_nCurrentScreen = 1;
-    }
-    else if (strcmp(button->szName, "server") == 0)
-    {
-    }
-    else if (strcmp(button->szName, "display") == 0)
-    {
-
-        // g_nCurrentScreen = SCREEN_DISPLAY;
-    }
-    else if (strcmp(button->szName, "options") == 0)
-    {
-        g_nCurrentScreen = SCREEN_OPTIONS;
-        OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
-    }
-    else if (strcmp(button->szName, "exit") == 0)
-    {
-        bShouldClose = TRUE;
-    }
-    else if (strcmp(button->szName, "minimize") == 0)
-    {
-        MinimizeWindow();
-    }
-    else if (strcmp(button->szName, "x") == 0)
-    {
-
-        bShouldClose = TRUE;
-    }
-    else if (strcmp(button->szName, "install") == 0)
-    {
-        InstallAVP2Registry();
+        case BUTTON_PLAY:
+        {
+            g_nCurrentScreen = SCREEN_OPTIONS;
+            OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+            break;
+        }
+        case BUTTON_SERVER:
+        {
+            break;
+        }
+        case BUTTON_DISPLAY:
+        {
+            g_nCurrentScreen = SCREEN_DISPLAY;
+            DisplaySetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+            break;
+        }
+        case BUTTON_OPTIONS:
+        {
+            g_nCurrentScreen = SCREEN_OPTIONS;
+            OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+            break;
+        }
+        case BUTTON_EXIT:
+        {
+            bShouldClose = TRUE;
+            break;
+        }
+        case BUTTON_MINIMIZE:
+        {
+            MinimizeWindow();
+            break;
+        }
+        case BUTTON_X:
+        {
+            bShouldClose = TRUE;
+            break;
+        }
+        case BUTTON_OK:
+        {
+            break;
+        }
+        case BUTTON_CANCEL:
+        {
+            break;
+        }
+        case BUTTON_INSTALL:
+        {
+            InstallAVP2Registry();
+            break;
+        }
     }
 }

@@ -66,6 +66,8 @@ static void PlaySoundResource(const char *szName)
 
     UnlockResource(hRes);
     FreeResource(hRes);
+
+    UnloadWave(wave);
 }
 
 static void PlayRandomIntroSound()
@@ -235,121 +237,7 @@ static char* FormatStringWithNewLines(const char* szString, Rect rTextDrawArea)
     return szFormattedString;
 }
 
-static void GetModes(Monitor **pMonitorArray)
-{
-    // enumerate display adapters
-    int adapterCount = 0;
-    int monitorCount = 0;
-    int modeCount = 0;
-    int adapterIndex = 0;
-    int monitorIndex = 0;
-    int modeIndex = 0;
 
-    // get number of adapters using glfwGetMonitors
-    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-
-    // initialize mon array and calloc
-    pMonitorArray = calloc(monitorCount, sizeof(Monitor *));
-
-    if(pMonitorArray == NULL)
-    {
-        TraceLog(LOG_ERROR, "Failed to allocate memory for monitors!");
-        exit(1);
-    }
-
-    // get modes for each adapter
-    for (monitorIndex = 0; monitorIndex < monitorCount; monitorIndex++)
-    {
-        pMonitorArray[monitorIndex] = calloc(1, sizeof(Monitor));
-
-        if(pMonitorArray[monitorIndex] == NULL)
-        {
-            TraceLog(LOG_ERROR, "Failed to allocate memory for monitor!");
-            exit(1);
-        }
-
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitorIndex], &modeCount);
-        pMonitorArray[monitorIndex]->modeCount = modeCount;
-
-        pMonitorArray[monitorIndex]->modes = calloc(modeCount, sizeof(Mode *));
-
-        if(pMonitorArray[monitorIndex]->modes == NULL)
-        {
-            TraceLog(LOG_ERROR, "Failed to allocate memory for modes!");
-            exit(1);
-        }
-
-        for (modeIndex = 0; modeIndex < modeCount; modeIndex++)
-        {
-            pMonitorArray[monitorIndex]->modes[modeIndex] = calloc(1, sizeof(Mode));
-
-            if(pMonitorArray[monitorIndex]->modes[modeIndex] == NULL)
-            {
-                TraceLog(LOG_ERROR, "Failed to allocate memory for mode!");
-                exit(1);
-            }
-
-            pMonitorArray[monitorIndex]->modes[modeIndex]->width = modes[modeIndex].width;
-            pMonitorArray[monitorIndex]->modes[modeIndex]->height = modes[modeIndex].height;
-            pMonitorArray[monitorIndex]->modes[modeIndex]->refreshRate = modes[modeIndex].refreshRate;
-
-            TraceLog(LOG_INFO, "Adapter %i, Mode %i: %i x %i", monitorIndex, modeIndex, modes[modeIndex].width, modes[modeIndex].height);
-        }
-
-        // Remove duplicate and non-standard modes
-        for (modeIndex = 0; modeIndex < pMonitorArray[monitorIndex]->modeCount; modeIndex++)
-        {
-            float aspectRatio = (float)pMonitorArray[monitorIndex]->modes[modeIndex]->width / (float)pMonitorArray[monitorIndex]->modes[modeIndex]->height;
-            const float expectedAspectRatio[] = {4.0f / 3.0f, 16.0f / 9.0f, 21.5f / 9.0f, 16.0f / 10.0f};
-            bool isExpectedAspectRatio = FALSE;
-
-            for (size_t i = 0; i < sizeof(expectedAspectRatio) / sizeof(expectedAspectRatio[0]); i++)
-            {
-                if (fabs(aspectRatio - expectedAspectRatio[i]) < 0.001f)
-                {
-                    isExpectedAspectRatio = TRUE;
-                    break;
-                }
-            }
-
-            if (!isExpectedAspectRatio)
-            {
-                // Free the memory used by the removed mode
-                free(pMonitorArray[monitorIndex]->modes[modeIndex]);
-                pMonitorArray[monitorIndex]->modes[modeIndex] = NULL;
-
-                // Shift the remaining modes to fill the gap
-                memmove(&pMonitorArray[monitorIndex]->modes[modeIndex], &pMonitorArray[monitorIndex]->modes[modeIndex + 1], (pMonitorArray[monitorIndex]->modeCount - modeIndex - 1) * sizeof(Mode *));
-                pMonitorArray[monitorIndex]->modeCount--;
-
-                TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed non-standard mode", monitorIndex, modeIndex);
-                modeIndex--;
-            }
-            else
-            {
-                for (size_t otherIndex = modeIndex + 1; otherIndex < pMonitorArray[monitorIndex]->modeCount; otherIndex++)
-                {
-                    if (pMonitorArray[monitorIndex]->modes[modeIndex]->width == pMonitorArray[monitorIndex]->modes[otherIndex]->width &&
-                        pMonitorArray[monitorIndex]->modes[modeIndex]->height == pMonitorArray[monitorIndex]->modes[otherIndex]->height)
-                    {
-                        // Free the memory used by the removed mode
-                        free(pMonitorArray[monitorIndex]->modes[otherIndex]);
-                        pMonitorArray[monitorIndex]->modes[otherIndex] = NULL;
-
-                        // Shift the remaining modes to fill the gap
-                        memmove(&pMonitorArray[monitorIndex]->modes[otherIndex], &pMonitorArray[monitorIndex]->modes[otherIndex + 1], (pMonitorArray[monitorIndex]->modeCount - otherIndex - 1) * sizeof(Mode *));
-                        pMonitorArray[monitorIndex]->modeCount--;
-
-                        TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed duplicate mode", monitorIndex, otherIndex);
-                        otherIndex--;
-                    }
-                }
-            }
-        }
-    }
-
-    TraceLog(LOG_INFO, "Number of monitors: %i", monitorCount);
-}
 
 static void FreeModes(Monitor **mon)
 {

@@ -17,7 +17,7 @@ typedef struct button_t
     Vector2 position;
     Texture texture[3];
     uint32_t currentTexture;
-    char szName[32];
+    uint8_t id;
     void (*onPress)(struct button_t *);
     void (*onUnload)(struct button_t *);
 } Button;
@@ -29,8 +29,6 @@ typedef struct checkbox_t
     Vector2 position;
     Texture texture[2];
     uint32_t currentTexture;
-    char szName[32];
-    char szText[256];
     uint8_t id;
     void (*onPress)(struct checkbox_t *);
     void (*onUnload)(struct checkbox_t *);
@@ -67,5 +65,33 @@ typedef struct settings_t
     bool nOptionsWarning;
     bool nSaveCommands;
 } LauncherSettings;
+
+//button ID's
+typedef enum button_e
+{
+BUTTON_PLAY,
+BUTTON_SERVER,
+BUTTON_DISPLAY,
+BUTTON_OPTIONS,
+BUTTON_EXIT,
+BUTTON_MINIMIZE,
+BUTTON_X,
+BUTTON_OK,
+BUTTON_CANCEL,
+BUTTON_INSTALL,
+}ButtonTypes;
+
+
+typedef enum checkbox_e
+{
+CHECKBOX_NONE,
+CHECKBOX_ALWAYS_RUN,
+CHECKBOX_NO_SOUND,
+CHECKBOX_NO_MUSIC,
+CHECKBOX_NO_LOGOS,
+CHECKBOX_NO_TRIPLEBUFFERING,
+CHECKBOX_NO_JOYSTICK,
+CHECKBOX_NO_HARDWARECURSOR,
+}CheckboxTypes;
 
 #endif // _TYPES_H_

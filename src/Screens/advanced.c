@@ -12,25 +12,26 @@
 // Win32 Stuff
 static HWND g_hWnd;
 static HWND hwndTextBox;
+static WNDPROC oldWndProc;
 
 // CHECKBOXES
-Checkbox saveCommands;
-Checkbox disableMovies;
-Checkbox disableSound;
-Checkbox disableMusic;
-Checkbox disableMovies;
-Checkbox disableJoystick;
-Checkbox disableFog;
-Checkbox disableHardwareCursor;
-Checkbox disableTripleBuffering;
-Checkbox restoreDefaultSettings;
-Checkbox **checkboxesAdvanced;
+static Checkbox saveCommands;
+static Checkbox disableMovies;
+static Checkbox disableSound;
+static Checkbox disableMusic;
+static Checkbox disableMovies;
+static Checkbox disableJoystick;
+static Checkbox disableFog;
+static Checkbox disableHardwareCursor;
+static Checkbox disableTripleBuffering;
+static Checkbox restoreDefaultSettings;
+static Checkbox **checkboxesAdvanced;
 
 // BUTTONS
-Button xButton;
-Button okButton;
-Button cancelButton;
-Button **buttons;
+static Button xButton;
+static Button okButton;
+static Button cancelButton;
+static Button **buttons;
 
 // LOCAL VARIABLES
 static uint32_t nCurrentToolTip = 0;
@@ -61,7 +62,7 @@ void OptionsUnloadScreen()
         return;
     }
     // free buttons
-    for (size_t i = 0; i < ADVANCED_BUTTON_COUNT; i++)
+    for (size_t i = 0; i < OPTIONS_BUTTON_COUNT; i++)
     {
         buttons[i]->onUnload(buttons[i]);
         free(buttons[i]);
@@ -76,7 +77,7 @@ void OptionsUnloadScreen()
         return;
     }
     // free checkboxes
-    for (size_t i = 0; i < CHECK_COUNT; i++)
+    for (size_t i = 0; i < OPTIONS_CHECKBOX_COUNT; i++)
     {
         checkboxesAdvanced[i]->onUnload(checkboxesAdvanced[i]);
         free(checkboxesAdvanced[i]);
@@ -160,6 +161,25 @@ static void SetupCheckBoxesState()
     disableHardwareCursor.isChecked = g_Settings.nDisableHardwareCursor;
 }
 
+LRESULT Wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    // get key input
+    if (uMsg == WM_KEYDOWN)
+    {
+        if (wParam == VK_BACK)
+        {
+            PlaySoundResource(AVP2_LAUNCHER_TYPE_SOUND_BACKSPACE);
+        }
+        else
+        {
+            uint8_t nRand = rand() % 3;
+            PlaySoundResource(AVP2_LAUNCHER_TYPE_SOUND[nRand]);
+        }
+    }
+
+    return CallWindowProc(oldWndProc, hWnd, uMsg, wParam, lParam);
+}
+
 void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
 {
     // save old render and update loops
@@ -183,20 +203,17 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
                                       WS_CHILD | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL | ES_WANTRETURN,
                                       26, 220, 400, 18, g_hWnd, NULL, GetModuleHandle(NULL), NULL);
 
+        // setup callback oldWndProc
+        oldWndProc = (WNDPROC)SetWindowLongPtr(hwndTextBox, GWLP_WNDPROC, (LONG_PTR)Wndproc);
+
         // create a style for the textbox
         SetWindowLong(hwndTextBox, GWL_EXSTYLE, GetWindowLong(hwndTextBox, GWL_STYLE) | ES_AUTOHSCROLL);
 
         SendMessage(hwndTextBox, EM_SETBKGNDCOLOR, 0, RGB(0, 0, 0));
 
-        // get dpi scale factor
-        HDC hdc = GetDC(hwndTextBox);
-        int dpiXScale = GetDeviceCaps(hdc, LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
-        int dpiYScale = GetDeviceCaps(hdc, LOGPIXELSY) / USER_DEFAULT_SCREEN_DPI;
-        ReleaseDC(hwndTextBox, hdc);
-
         // set font
         HFONT hFont = CreateFontA(18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
-                                  CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, "Tahoma");
+                                  CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, "Segoe UI");
         SendMessage(hwndTextBox, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // change text color
@@ -230,7 +247,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     saveCommands.onPress = CheckboxPress;
     saveCommands.onHover = CheckBoxHover;
     saveCommands.onUnload = UnloadCheckBox;
-    saveCommands.id = 1;
+    saveCommands.id = CHECKBOX_ALWAYS_RUN;
+    saveCommands.isEnabled = TRUE;
 
     disableSound.position = (Vector2){26, 68};
     disableSound.isChecked = g_Settings.nDisableSound;
@@ -242,7 +260,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableSound.onPress = CheckboxPress;
     disableSound.onHover = CheckBoxHover;
     disableSound.onUnload = UnloadCheckBox;
-    disableSound.id = 2;
+    disableSound.id = CHECKBOX_NO_SOUND;
+    disableSound.isEnabled = TRUE;
 
     disableMusic.position = (Vector2){26, 88};
     disableMusic.isChecked = g_Settings.nDisableMusic;
@@ -254,7 +273,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableMusic.onPress = CheckboxPress;
     disableMusic.onHover = CheckBoxHover;
     disableMusic.onUnload = UnloadCheckBox;
-    disableMusic.id = 3;
+    disableMusic.id = CHECKBOX_NO_MUSIC;
+    disableMusic.isEnabled = TRUE;
 
     disableMovies.position = (Vector2){26, 108};
     disableMovies.isChecked = g_Settings.nDisableMovies;
@@ -266,7 +286,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableMovies.onPress = CheckboxPress;
     disableMovies.onHover = CheckBoxHover;
     disableMovies.onUnload = UnloadCheckBox;
-    disableMovies.id = 4;
+    disableMovies.id = CHECKBOX_NO_LOGOS;
+    disableMovies.isEnabled = TRUE;
 
     disableTripleBuffering.position = (Vector2){228, 68};
     disableTripleBuffering.isChecked = g_Settings.nDisableTripleBuffering;
@@ -278,7 +299,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableTripleBuffering.onPress = CheckboxPress;
     disableTripleBuffering.onHover = CheckBoxHover;
     disableTripleBuffering.onUnload = UnloadCheckBox;
-    disableTripleBuffering.id = 5;
+    disableTripleBuffering.id = CHECKBOX_NO_TRIPLEBUFFERING;
+    disableTripleBuffering.isEnabled = TRUE;
 
     disableJoystick.position = (Vector2){228, 88};
     disableJoystick.isChecked = g_Settings.nDisableJoysticks;
@@ -290,7 +312,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableJoystick.onPress = CheckboxPress;
     disableJoystick.onHover = CheckBoxHover;
     disableJoystick.onUnload = UnloadCheckBox;
-    disableJoystick.id = 6;
+    disableJoystick.id = CHECKBOX_NO_JOYSTICK;
+    disableJoystick.isEnabled = TRUE;
 
     disableHardwareCursor.position = (Vector2){228, 108};
     disableHardwareCursor.isChecked = g_Settings.nDisableHardwareCursor;
@@ -302,9 +325,10 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableHardwareCursor.onPress = CheckboxPress;
     disableHardwareCursor.onHover = CheckBoxHover;
     disableHardwareCursor.onUnload = UnloadCheckBox;
-    disableHardwareCursor.id = 7;
+    disableHardwareCursor.id = CHECKBOX_NO_HARDWARECURSOR;
+    disableHardwareCursor.isEnabled = TRUE;
 
-    checkboxesAdvanced = (Checkbox **)malloc(sizeof(Checkbox *) * CHECK_COUNT);
+    checkboxesAdvanced = (Checkbox **)malloc(sizeof(Checkbox *) * OPTIONS_CHECKBOX_COUNT);
 
     if (!checkboxesAdvanced)
     {
@@ -312,7 +336,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
         exit(1);
     }
 
-    for (size_t i = 0; i < CHECK_COUNT; i++)
+    for (size_t i = 0; i < OPTIONS_CHECKBOX_COUNT; i++)
     {
         checkboxesAdvanced[i] = (Checkbox *)malloc(sizeof(Checkbox));
 
@@ -344,7 +368,6 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     xButton.onPress = OnButtonPressCancel;
     xButton.onUnload = UnloadButton;
     xButton.isEnabled = TRUE;
-    strcpy(xButton.szName, "x");
 
     // generic
     if (okButton.texture[0].id == 0)
@@ -357,7 +380,6 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     okButton.onPress = OnButtonPressOK;
     okButton.onUnload = UnloadButton;
     okButton.isEnabled = TRUE;
-    strcpy(okButton.szName, "ok");
 
     if (cancelButton.texture[0].id == 0)
     {
@@ -369,10 +391,9 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     cancelButton.onPress = OnButtonPressCancel;
     cancelButton.onUnload = UnloadButton;
     cancelButton.isEnabled = TRUE;
-    strcpy(cancelButton.szName, "cancel");
 
     // seTUP BUTTONS
-    buttons = (Button **)malloc(sizeof(Button *) * 3);
+    buttons = (Button **)malloc(sizeof(Button *) * OPTIONS_BUTTON_COUNT);
 
     if (!buttons)
     {
@@ -380,7 +401,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
         exit(1);
     }
 
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < OPTIONS_BUTTON_COUNT; i++)
     {
         buttons[i] = (Button *)malloc(sizeof(Button));
 
@@ -398,24 +419,28 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
 void OptionsRenderScreen()
 {
-    //Start the 2D Canvas
+    // Start the 2D Canvas
     BeginDrawing();
     ClearBackground(BLACK);
 
     DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
-    DrawTexture(okButton.texture[okButton.currentTexture], okButton.position.x, okButton.position.y, WHITE);
-    DrawTexture(cancelButton.texture[cancelButton.currentTexture], cancelButton.position.x, cancelButton.position.y, WHITE);
-    DrawTexture(xButton.texture[xButton.currentTexture], xButton.position.x, xButton.position.y, WHITE);
+    for (size_t i = 0; i < OPTIONS_BUTTON_COUNT; i++)
+    {
+        if (buttons[i]->isEnabled == TRUE)
+        {
+            DrawTexture(buttons[i]->texture[buttons[i]->currentTexture], buttons[i]->position.x, buttons[i]->position.y, WHITE);
+        }
+    }
 
-    // Draw checkboxes
-    DrawTexture(saveCommands.texture[saveCommands.isChecked], saveCommands.position.x, saveCommands.position.y, WHITE);
-    DrawTexture(disableSound.texture[disableSound.isChecked], disableSound.position.x, disableSound.position.y, WHITE);
-    DrawTexture(disableMusic.texture[disableMusic.isChecked], disableMusic.position.x, disableMusic.position.y, WHITE);
-    DrawTexture(disableMovies.texture[disableMovies.isChecked], disableMovies.position.x, disableMovies.position.y, WHITE);
-    DrawTexture(disableTripleBuffering.texture[disableTripleBuffering.isChecked], disableTripleBuffering.position.x, disableTripleBuffering.position.y, WHITE);
-    DrawTexture(disableJoystick.texture[disableJoystick.isChecked], disableJoystick.position.x, disableJoystick.position.y, WHITE);
-    DrawTexture(disableHardwareCursor.texture[disableHardwareCursor.isChecked], disableHardwareCursor.position.x, disableHardwareCursor.position.y, WHITE);
+    for (size_t i = 0; i < OPTIONS_CHECKBOX_COUNT; i++)
+    {
+        if (checkboxesAdvanced[i]->isEnabled == TRUE)
+        {
+            DrawTexture(checkboxesAdvanced[i]->texture[checkboxesAdvanced[i]->isChecked], checkboxesAdvanced[i]->position.x, checkboxesAdvanced[i]->position.y, WHITE);
+        }
+    }
+
 
     if (nCurrentToolTip > 0)
     {
@@ -431,10 +456,10 @@ void OptionsRenderScreen()
 
 static void CheckAllCheckBoxes()
 {
-    for (size_t i = 0; i < CHECK_COUNT; i++)
+    for (size_t i = 0; i < OPTIONS_CHECKBOX_COUNT; i++)
     {
         // null check
-        if (checkboxesAdvanced[i] == NULL)
+        if (checkboxesAdvanced[i]->isEnabled == FALSE)
         {
             continue;
         }
@@ -462,7 +487,7 @@ static void CheckAllCheckBoxes()
 static void CheckAllButtons()
 {
 
-    for (size_t i = 0; i < ADVANCED_BUTTON_COUNT; i++)
+    for (size_t i = 0; i < OPTIONS_BUTTON_COUNT; i++)
     {
         if (CheckCollisionPointRec(GetMousePosition(), (Rect){buttons[i]->position.x, buttons[i]->position.y, buttons[i]->texture[0].width, buttons[i]->texture[0].height}) && buttons[i]->isEnabled == TRUE)
         {
