@@ -201,7 +201,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // create textbox
         hwndTextBox = CreateWindowExA(0, TEXT("RICHEDIT50W"), TEXT("Type here"),
                                       WS_CHILD | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL | ES_WANTRETURN,
-                                      26, 220, 400, 18, g_hWnd, NULL, GetModuleHandle(NULL), NULL);
+                                      26, 218, 400, 18, g_hWnd, NULL, GetModuleHandle(NULL), NULL);
 
         // setup callback oldWndProc
         oldWndProc = (WNDPROC)SetWindowLongPtr(hwndTextBox, GWLP_WNDPROC, (LONG_PTR)Wndproc);

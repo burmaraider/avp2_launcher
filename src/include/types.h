@@ -50,6 +50,12 @@ typedef struct monitor_t
     Mode **modes;
 } Monitor;
 
+typedef struct rendererInfo_t
+{
+    char szModuleName[256];
+    char szModuleFileName[256];
+}RendererInfo;
+
 typedef struct settings_t
 {
     char *szCommands;

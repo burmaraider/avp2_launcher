@@ -12,11 +12,11 @@
 
 // Win32 Stuff
 static HWND g_hWnd;
-static HWND hwndComboBox;
-static HWND hwndListBox;
+static HWND hWndResolutionListBox;
+static HWND hWndRendererListBox;
+static HWND hWndDisplayAdapterListBox;
 static WNDPROC oldWndProc;
 static WNDPROC oldListProc;
-;
 
 // BUTTONS
 static Button xButton;
@@ -35,7 +35,10 @@ static bool bIsClosing = false;
 static void *pOldRenderLoop;
 static void *pOldUpdateLoop;
 
+static RendererInfo pRendererInfo[6];
+
 static void GetModes();
+static void LoadRendererInfo();
 
 // callback
 
@@ -46,7 +49,7 @@ static LRESULT CALLBACK listBoxCallBackProc(HWND hWnd, UINT message, WPARAM wPar
     // get the index from listbox
     case LBN_SELCHANGE:
     {
-        listboxIndex = (uint8_t)SendMessage(hwndListBox, LB_GETCURSEL, 0, 0);
+        listboxIndex = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
         break;
     }
     }
@@ -57,60 +60,42 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 {
     switch (message)
     {
-
-    case WM_COMMAND:
-    {
-        if ((HWND)lParam == hwndListBox)
+        case WM_COMMAND:
         {
-            if (HIWORD(wParam) == LBN_SELCHANGE)
+            if ((HWND)lParam == hWndResolutionListBox)
             {
-                listboxIndex = (uint8_t)SendMessage(hwndListBox, LB_GETCURSEL, 0, 0);
+                if (HIWORD(wParam) == LBN_SELCHANGE)
+                {
+                    listboxIndex = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
+                }
             }
         }
-    }
-    case WM_CTLCOLORLISTBOX:
-    {
-        COMBOBOXINFO info1;
-        info1.cbSize = sizeof(info1);
-        SendMessage(hwndComboBox, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info1);
+        case WM_CTLCOLORLISTBOX:
+        {
 
-        if ((HWND)lParam == hwndListBox)
+            if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
+            {
+                HDC dc = (HDC)wParam;
+                SetBkMode(dc, OPAQUE);
+                SetTextColor(dc, RGB(0, 255, 0));
+                SetBkColor(dc, RGB(0, 0, 0));
+                HBRUSH comboBrush = CreateSolidBrush(RGB(0, 0, 0));
+                return (LRESULT)comboBrush;
+            }
+        }
+        case WM_CTLCOLOREDIT:
         {
+            HWND hWnd = (HWND)lParam;
             HDC dc = (HDC)wParam;
-            SetBkMode(dc, OPAQUE);
-            SetTextColor(dc, RGB(0, 255, 0));
-            SetBkColor(dc, RGB(0, 0, 0));
-            HBRUSH comboBrush = CreateSolidBrush(RGB(0, 0, 0));
-            return (LRESULT)comboBrush;
+            if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
+            {
+                SetBkMode(dc, OPAQUE);
+                SetTextColor(dc, RGB(0, 255, 0));
+                SetBkColor(dc, RGB(0, 0, 0));                   // 0x383838
+                HBRUSH comboBrush = CreateSolidBrush(0x383838); // global var
+                return (LRESULT)comboBrush;
+            }
         }
-    }
-    case WM_CTLCOLOREDIT:
-    {
-        HWND hWnd = (HWND)lParam;
-        HDC dc = (HDC)wParam;
-        if (hWnd == hwndListBox)
-        {
-            SetBkMode(dc, OPAQUE);
-            SetTextColor(dc, RGB(0, 255, 0));
-            SetBkColor(dc, RGB(0, 0, 0));                   // 0x383838
-            HBRUSH comboBrush = CreateSolidBrush(0x383838); // global var
-            return (LRESULT)comboBrush;
-        }
-    }
-    // change scrollbar color to black with green arrows
-    case WM_CTLCOLORSCROLLBAR:
-    {
-        HWND hWnd = (HWND)lParam;
-        HDC dc = (HDC)wParam;
-        if (hWnd == hwndListBox)
-        {
-            SetBkMode(dc, OPAQUE);
-            SetTextColor(dc, RGB(0, 255, 0));
-            SetBkColor(dc, RGB(0, 0, 0));                   // 0x383838
-            HBRUSH comboBrush = CreateSolidBrush(0x383838); // global var
-            return (LRESULT)comboBrush;
-        }
-    }
     }
     return CallWindowProc(oldWndProc, hWnd, message, wParam, lParam);
 }
@@ -125,7 +110,9 @@ static void OnButtonPressOK(Button *button)
     ScreenUpdateLoop = pOldUpdateLoop;
     ScreenRenderLoop = pOldRenderLoop;
 
-    ShowWindow(hwndListBox, SW_HIDE);
+    ShowWindow(hWndResolutionListBox, SW_HIDE);
+    ShowWindow(hWndRendererListBox, SW_HIDE);
+    ShowWindow(hWndDisplayAdapterListBox, SW_HIDE);
 }
 
 static void OnButtonPressCancel(Button *button)
@@ -141,7 +128,9 @@ static void OnButtonPressCancel(Button *button)
 
     
 
-    ShowWindow(hwndListBox, SW_HIDE);
+    ShowWindow(hWndResolutionListBox, SW_HIDE);
+    ShowWindow(hWndRendererListBox, SW_HIDE);
+    ShowWindow(hWndDisplayAdapterListBox, SW_HIDE);
 }
 
 void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
@@ -162,12 +151,20 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
     g_hWnd = GetWindowHandle();
 
-    if (!hwndListBox)
+    if (!hWndResolutionListBox)
     {
 
-        hwndListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT(""),
-                                     WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
-                                     20, 78, 126, 240, g_hWnd, NULL, NULL, NULL);
+        hWndResolutionListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("1"),
+                                               WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
+                                               20, 78, 126, 240, g_hWnd, NULL, NULL, NULL);
+
+        hWndRendererListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("2"),
+                                             WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
+                                             180, 78, 403, 105, g_hWnd, NULL, NULL, NULL);
+
+        hWndDisplayAdapterListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("3"),
+                                                   WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
+                                                   180, 206, 403, 105, g_hWnd, NULL, NULL, NULL);
 
         // set font size to 14
         // SendMessage(hwndListBox, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
@@ -175,50 +172,46 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // set font
         HFONT hFont = CreateFontA(13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
                                   CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, "Segoe UI");
-        SendMessage(hwndListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
+        SendMessage(hWndResolutionListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
+        SendMessage(hWndRendererListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
+        SendMessage(hWndDisplayAdapterListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // set callback
         oldWndProc = (WNDPROC)SetWindowLongPtr(g_hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
         GetModes();
+        LoadRendererInfo();
+
+        
+
+
+        int numAdapters = 0;
+        DISPLAY_DEVICE dd;
+        dd.cb = sizeof(DISPLAY_DEVICE);
+
+        for (DWORD i = 0; EnumDisplayDevices(NULL, i, &dd, 0); i++)
+        {
+            if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) && !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER))
+            {
+                SendMessage(hWndDisplayAdapterListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)dd.DeviceString);
+            }
+        }
 
         for (int i = 0; i < pMonitorArray[0]->modeCount; i++)
         {
             // build string width x height
             char *temp = (char *)malloc(256);
             sprintf(temp, "%d x %d", pMonitorArray[0]->modes[i]->width, pMonitorArray[0]->modes[i]->height);
-            SendMessage(hwndListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)temp);
+            SendMessage(hWndResolutionListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)temp);
         }
-
-        //load library "d3d.ren"
-        HMODULE hdll = LoadLibrary("d3d.ren");
-        if (hdll == NULL)
-        {
-            MessageBox(NULL, "Failed to load d3d.ren!", "Error", MB_OK | MB_ICONERROR);
-            exit(1);
-        }
-
-        //load string from resource in d3d.ren
-        char *szString = (char *)malloc(256);
-        if (szString == NULL)
-        {
-            MessageBox(NULL, "Failed to allocate memory for the window title.", "Error", MB_OK | MB_ICONERROR);
-            exit(1);
-        }
-
-        LoadString(hdll, 5, szString, 256);
-
-        MessageBox(NULL, szString, "Error", MB_OK | MB_ICONERROR);
-
-        //free library
-        FreeLibrary(hdll);
-        free(szString);
 
     }
     else
     {
         // unhide the listbox
-        ShowWindow(hwndListBox, SW_SHOW);
+        ShowWindow(hWndResolutionListBox, SW_SHOW);
+        ShowWindow(hWndRendererListBox, SW_SHOW);
+        ShowWindow(hWndDisplayAdapterListBox, SW_SHOW);
     }
 
     SetWindowSize(600, 394);
@@ -362,6 +355,9 @@ static void GetModes()
     // initialize mon array and calloc
     pMonitorArray = calloc(monitorCount, sizeof(Monitor *));
 
+
+    const GLubyte *renderer = glGetString(GL_RENDERER);
+
     if (pMonitorArray == NULL)
     {
         TraceLog(LOG_ERROR, "Failed to allocate memory for monitors!");
@@ -460,4 +456,48 @@ static void GetModes()
     }
 
     TraceLog(LOG_INFO, "Number of monitors: %i", monitorCount);
+}
+
+static void LoadRendererInfo()
+{
+    //load each .ren file in the directory
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    char szDir[MAX_PATH];
+    char szTempString[256];
+
+    GetCurrentDirectory(MAX_PATH, szDir);
+    strcat(szDir, "\\*.ren");
+
+    hFind = FindFirstFile(szDir, &FindFileData);
+
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
+        MessageBox(NULL, "Failed to find any .ren files!", "Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    uint8_t nRendererCount = 0;
+    do
+    {
+        //load library
+        HMODULE hdll = LoadLibrary(FindFileData.cFileName);
+        if (hdll == NULL)
+        {
+            MessageBox(NULL, "Failed to load .ren file!", "Error", MB_OK | MB_ICONERROR);
+            continue;
+        }
+
+        LoadString(hdll, 5, pRendererInfo[nRendererCount].szModuleName, 256);
+        strcpy(pRendererInfo[nRendererCount].szModuleFileName, FindFileData.cFileName);
+
+        sprintf(szTempString, "%s (%s)", pRendererInfo[nRendererCount].szModuleName, pRendererInfo[nRendererCount].szModuleFileName);
+
+        //add string to listbox
+        SendMessage(hWndRendererListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)szTempString);
+
+        //free library
+        FreeLibrary(hdll);
+
+    } while (FindNextFile(hFind, &FindFileData) != 0);
 }
