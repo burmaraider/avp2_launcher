@@ -62,10 +62,10 @@ if(${PLATFORM} STREQUAL "Windows")
 endif()
 
 set(SOURCE_FILES 
-${SOURCE_DIR}/main.c
 ${SOURCE_DIR}/Screens/advanced.c
 ${SOURCE_DIR}/Screens/splash.c
 ${SOURCE_DIR}/Screens/display.c
+${SOURCE_DIR}/main.c
 )
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} )

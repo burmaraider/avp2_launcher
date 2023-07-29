@@ -26,6 +26,9 @@ static Button **buttons;
 
 static Monitor **pMonitorArray;
 uint8_t listboxIndex = 0;
+char szRendererSelection[64];
+uint8_t nRendererSelection = 0;
+AutoexecCfg *autoexec;
 
 // LOCAL VARIABLES
 static uint32_t nCurrentToolTip = 0;
@@ -36,26 +39,13 @@ static void *pOldRenderLoop;
 static void *pOldUpdateLoop;
 
 static RendererInfo pRendererInfo[6];
+static char szDisplay[6][128];
+static uint8_t nDisplaySelection = 0;
 
 static void GetModes();
 static void LoadRendererInfo();
 
 // callback
-
-static LRESULT CALLBACK listBoxCallBackProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    // get the index from listbox
-    case LBN_SELCHANGE:
-    {
-        listboxIndex = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
-        break;
-    }
-    }
-    return CallWindowProc(oldWndProc, hWnd, message, wParam, lParam);
-}
-// Windows Process
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -68,6 +58,21 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                 {
                     listboxIndex = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
                 }
+            }
+            else if((HWND)lParam == hWndRendererListBox)
+            {
+                if (HIWORD(wParam) == LBN_SELCHANGE)
+                {
+                    nRendererSelection = (uint8_t)SendMessage(hWndRendererListBox, LB_GETCURSEL, 0, 0);
+                }
+                memset(szRendererSelection, 0, sizeof(szRendererSelection));
+                strcpy(szRendererSelection, pRendererInfo[nRendererSelection].szModuleFileName);
+                UpdateKeyInList(autoexec, "RENDERDLL", szRendererSelection);
+                TraceLog(LOG_INFO, "Renderer Selection: %s", szRendererSelection);
+            }
+            else if((HWND)lParam == hWndDisplayAdapterListBox)
+            {
+                nDisplaySelection = (uint8_t)SendMessage(hWndDisplayAdapterListBox, LB_GETCURSEL, 0, 0);
             }
         }
         case WM_CTLCOLORLISTBOX:
@@ -109,6 +114,23 @@ static void OnButtonPressOK(Button *button)
 
     ScreenUpdateLoop = pOldUpdateLoop;
     ScreenRenderLoop = pOldRenderLoop;
+
+    //save the settings to autoexec.cfg
+    UpdateKeyInList(autoexec, "RENDERDLL", szRendererSelection);
+
+    //convert int to string
+    char szWidth[8];
+    char szHeight[8];
+    itoa(pMonitorArray[0]->modes[listboxIndex]->width, szWidth, 10);
+    itoa(pMonitorArray[0]->modes[listboxIndex]->height, szHeight, 10);
+
+    UpdateKeyInList(autoexec, "SCREENWIDTH", szWidth);
+    UpdateKeyInList(autoexec, "SCREENHEIGHT", szHeight);
+    UpdateKeyInList(autoexec, "GameScreenHeight", szHeight);
+    UpdateKeyInList(autoexec, "GameScreenWidth", szWidth);
+    UpdateKeyInList(autoexec, "CARDDESC", szDisplay[nDisplaySelection]);
+
+    SaveConfig(autoexec);
 
     ShowWindow(hWndResolutionListBox, SW_HIDE);
     ShowWindow(hWndRendererListBox, SW_HIDE);
@@ -193,7 +215,11 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         {
             if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) && !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER))
             {
-                SendMessage(hWndDisplayAdapterListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)dd.DeviceString);
+                char szBuffer[256];
+                sprintf(szBuffer, "%s (%s)", dd.DeviceString, dd.DeviceName);
+                SendMessage(hWndDisplayAdapterListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)szBuffer);
+                strcat(szDisplay[numAdapters], dd.DeviceName);
+                numAdapters++;
             }
         }
 
@@ -274,6 +300,30 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
     buttons[0] = &okButton;
     buttons[1] = &cancelButton;
     buttons[2] = &xButton;
+
+    //Load autoexec.cfg file 
+    autoexec = (AutoexecCfg*)malloc(sizeof(AutoexecCfg));
+    autoexec->nType = 0;
+    autoexec->pNext = NULL;
+    autoexec->szKey = NULL;
+    autoexec->szValue = NULL;
+
+
+    LoadAutoexecCfg(autoexec);
+
+    //remove first node its nulled - #TODO: fix this
+    void *temp = autoexec;
+    autoexec = autoexec->pNext;
+    free(temp);
+
+    //select index 0
+    //focus on resolution listbox
+    SetFocus(hWndResolutionListBox);
+    SendMessage(hWndResolutionListBox, LB_SETCURSEL, 0, 0);
+    SetFocus(hWndRendererListBox);
+    SendMessage(hWndRendererListBox, LB_SETCURSEL, 0, 0);
+    SetFocus(hWndDisplayAdapterListBox);
+    SendMessage(hWndDisplayAdapterListBox, LB_SETCURSEL, 0, 0);
 }
 
 void DisplayRenderScreen()

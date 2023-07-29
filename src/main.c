@@ -16,6 +16,7 @@
 // Screen headers
 #include "include\Screens\splash.h"
 #include "include\Screens\advanced.h"
+#include "include\Screens\display.h"
 
 bool bShouldClose = false;
 
@@ -130,12 +131,18 @@ void ButtonPressCallback(Button *button)
     {
         case BUTTON_PLAY:
         {
-            g_nCurrentScreen = SCREEN_OPTIONS;
-            OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+            if(Launch(LITHTECH))
+            {
+                bShouldClose = TRUE;
+            }
             break;
         }
         case BUTTON_SERVER:
         {
+            if(Launch(SERVER))
+            {
+                bShouldClose = TRUE;
+            }
             break;
         }
         case BUTTON_DISPLAY:

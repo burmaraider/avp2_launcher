@@ -56,6 +56,21 @@ typedef struct rendererInfo_t
     char szModuleFileName[256];
 }RendererInfo;
 
+typedef enum configType_e
+{
+    CONFIG_TYPE_STRING,
+    CONFIG_TYPE_WITHOUT_QUOTES,
+}ConfigType;
+
+
+typedef struct autoexecCfg_t
+{
+    ConfigType nType;
+    char *szKey;
+    char *szValue;
+    struct autoexecCfg_t *pNext;
+}AutoexecCfg;
+
 typedef struct settings_t
 {
     char *szCommands;

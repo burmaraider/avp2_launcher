@@ -54,6 +54,9 @@ static const uint32_t OPTIONS_BUTTON_COUNT = 3;
 static const uint32_t DISPLAY_BUTTON_COUNT = 3;
 static const uint32_t OPTIONS_CHECKBOX_COUNT = 7;
 
+static const uint32_t LITHTECH = 0;
+static const uint32_t SERVER = 1;
+
 
 static const char* const AVP2_TOOLTIPS[8] = {
 "What the hell am I looking at here?!"
