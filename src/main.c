@@ -189,7 +189,7 @@ void ButtonPressCallback(Button *button)
     }
     case BUTTON_LITHFAQ:
     {
-        ShellExecute(NULL, "open", "https://avpunknown.com/avp2aio/", NULL, NULL, SW_SHOWNORMAL);
+        ShellExecute(NULL, "open", "https://discord.com/invite/NteWk2s", NULL, NULL, SW_SHOWNORMAL);
         break;
     }
     }
