@@ -569,7 +569,7 @@ static void PrintAll(AutoexecCfg *list)
     TraceLog(LOG_INFO, "AUTOEXEC: %d entries", dwIndex);
 }
 
-static bool Launch(uint8_t nExecutable)
+static bool Launch(DWORD nExecutable)
 {
     // launch lithtech.exe
     STARTUPINFO si;

@@ -49,7 +49,7 @@ extern uint32_t g_nCurrentScreen;
 extern Font g_font;
 extern Texture g_backgroundImage[6];
 
-static const uint32_t SPLASH_BUTTON_COUNT = 10;
+static const uint32_t SPLASH_BUTTON_COUNT = 11;
 static const uint32_t OPTIONS_BUTTON_COUNT = 3;
 static const uint32_t DISPLAY_BUTTON_COUNT = 3;
 static const uint32_t OPTIONS_CHECKBOX_COUNT = 7;

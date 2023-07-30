@@ -17,6 +17,7 @@ static Button xButton;
 static Button okButton;
 static Button cancelButton;
 static Button installButton;
+static Button lithFAQButton;
 static Button **buttons;
 
 
@@ -105,7 +106,7 @@ void SplashSetupScreen()
     okButton.position = (Vector2){0, 0};
     okButton.onPress = ButtonPressCallback;
     okButton.onUnload = UnloadButton;
-    okButton.isEnabled = TRUE;
+    okButton.isEnabled = FALSE;
     okButton.id = BUTTON_OK;
 
     LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
@@ -114,7 +115,7 @@ void SplashSetupScreen()
     cancelButton.position = (Vector2){0, 0};
     cancelButton.onPress = ButtonPressCallback;
     cancelButton.onUnload = UnloadButton;
-    cancelButton.isEnabled = TRUE;
+    cancelButton.isEnabled = FALSE;
     cancelButton.id = BUTTON_CANCEL;
 
     LoadTextureFromResource(&installButton.texture[0], "INSTALLU");
@@ -124,6 +125,16 @@ void SplashSetupScreen()
     installButton.onPress = ButtonPressCallback;
     installButton.onUnload = UnloadButton;
     installButton.id = BUTTON_INSTALL;
+
+    LoadTextureFromResource(&lithFAQButton.texture[0], "LITHFAQU");
+    LoadTextureFromResource(&lithFAQButton.texture[1], "LITHFAQF");
+    LoadTextureFromResource(&lithFAQButton.texture[2], "LITHFAQD");
+    lithFAQButton.position = (Vector2){417, 163};
+    lithFAQButton.onPress = ButtonPressCallback;
+    lithFAQButton.onUnload = UnloadButton;
+    lithFAQButton.id = BUTTON_LITHFAQ;
+    lithFAQButton.isEnabled = TRUE;
+
 
     buttons = (Button **)malloc(sizeof(Button *) * SPLASH_BUTTON_COUNT);
 
@@ -154,6 +165,7 @@ void SplashSetupScreen()
     buttons[7] = &okButton;
     buttons[8] = &cancelButton;
     buttons[9] = &installButton;
+    buttons[10] = &lithFAQButton;
 
     if(g_bAVP2Installed)
     {
@@ -179,23 +191,16 @@ void SplashScreenRender()
     // draw background
     DrawTexture(g_backgroundImage[g_nCurrentScreen], 0, 0, WHITE);
 
+    // draw predator animation
     DrawTexturePro(g_backgroundImage[5], (Rect){nPredatorTextureFrame * (g_backgroundImage[5].width / 24), 0, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Rect){387, 18, g_backgroundImage[5].width / 24, g_backgroundImage[5].height}, (Vector2){0, 0}, 0, WHITE);
 
-    if(g_bAVP2Installed)
+    for (size_t i = 0; i < SPLASH_BUTTON_COUNT; i++)
     {
-        DrawTexture(playButton.texture[playButton.currentTexture], playButton.position.x, playButton.position.y, WHITE);
-        DrawTexture(serverButton.texture[serverButton.currentTexture], serverButton.position.x, serverButton.position.y, WHITE);
-        DrawTexture(displayButton.texture[displayButton.currentTexture], displayButton.position.x, displayButton.position.y, WHITE);
-        DrawTexture(optionsButton.texture[optionsButton.currentTexture], optionsButton.position.x, optionsButton.position.y, WHITE);
+        if (buttons[i]->isEnabled)
+        {
+            DrawTexture(buttons[i]->texture[buttons[i]->currentTexture], buttons[i]->position.x, buttons[i]->position.y, WHITE);
+        }
     }
-    else
-    {
-        DrawTexture(installButton.texture[installButton.currentTexture], installButton.position.x, installButton.position.y, WHITE);
-    }
-
-    DrawTexture(exitButton.texture[exitButton.currentTexture], exitButton.position.x, exitButton.position.y, WHITE);
-    DrawTexture(minimizeButton.texture[minimizeButton.currentTexture], minimizeButton.position.x, minimizeButton.position.y, WHITE);
-    DrawTexture(xButton.texture[xButton.currentTexture], xButton.position.x, xButton.position.y, WHITE);
 
     EndDrawing();
 }
@@ -217,6 +222,8 @@ void SplashUnloadScreen()
     }
     free(buttons);
     buttons = NULL;
+
+    
 }
 
 static void CheckAllButtons()

@@ -115,6 +115,8 @@ int main(int argc, char *argv[])
 
     OptionsUnloadScreen();
     SplashUnloadScreen();
+    DisplayUnloadScreen();
+    
     CloseAudioDevice();
 
     ExitWindow(); // Close window and OpenGL context
@@ -183,6 +185,11 @@ void ButtonPressCallback(Button *button)
         case BUTTON_INSTALL:
         {
             InstallAVP2Registry();
+            break;
+        }
+        case BUTTON_LITHFAQ:
+        {
+            ShellExecute(NULL, "open", "https://avpunknown.com/avp2aio/", NULL, NULL, SW_SHOWNORMAL);
             break;
         }
     }

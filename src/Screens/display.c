@@ -354,6 +354,28 @@ void DisplayRenderScreen()
     EndDrawing();
 }
 
+void DisplayUnloadScreen()
+{
+    // null check
+    if (buttons == NULL)
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < DISPLAY_BUTTON_COUNT; i++)
+    {
+        buttons[i]->onUnload(buttons[i]);
+        free(buttons[i]);
+        buttons[i] = NULL;
+    }
+    free(buttons);
+    buttons = NULL;
+    
+    FreeList(autoexec);
+    FreeModes(pMonitorArray);
+
+}
+
 static void CheckAllButtons()
 {
 
