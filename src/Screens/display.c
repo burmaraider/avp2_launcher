@@ -146,7 +146,7 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
                 break;
 
             // compare display name to szDisplayName
-            if (strcmp(szDisplayName, pMode->m_Description) == 0)
+            if (strcmp(szDisplayName, pMode->m_InternalName) == 0)
             {
                 // reaalloc the resolutions array
                 pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions = (Resolution **)realloc(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions, sizeof(Resolution *) * (nResolutionCount + 1));
@@ -160,18 +160,18 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
             else
             {
                 // this display name is not in the list, so add it to the list
-                strcpy(szDisplayName, pMode->m_Description);
+                strcpy(szDisplayName, pMode->m_InternalName);
 
                 nResolutionCount = 0;
 
                 if (nDisplayCount > 0)
                 {
                     pRendererInfo[nRendererCount]->nNumDisplays = nDisplayCount + 1;
-                    pRendererInfo[nRendererCount]->pDisplays = (Displays **)realloc(pRendererInfo[nRendererCount]->pDisplays, sizeof(Displays *) * (nDisplayCount));
+                    pRendererInfo[nRendererCount]->pDisplays = (Displays **)realloc(pRendererInfo[nRendererCount]->pDisplays, sizeof(Displays *) * (nDisplayCount +1));
                 }
 
                 pRendererInfo[nRendererCount]->pDisplays[nDisplayCount] = (Displays *)malloc(sizeof(Displays));
-                strcpy(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->szDisplayName, szDisplayName);
+                strcpy(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->szDisplayName, pMode->m_Description);
                 strcpy(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->szInternalName, pMode->m_InternalName);
 
                 pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->pResolutions = (Resolution **)malloc(sizeof(Resolution *) * 1);
