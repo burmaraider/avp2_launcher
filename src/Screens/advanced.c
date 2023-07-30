@@ -21,10 +21,8 @@ static Checkbox disableSound;
 static Checkbox disableMusic;
 static Checkbox disableMovies;
 static Checkbox disableJoystick;
-static Checkbox disableFog;
 static Checkbox disableHardwareCursor;
 static Checkbox disableTripleBuffering;
-static Checkbox restoreDefaultSettings;
 static Checkbox **checkboxesAdvanced;
 
 // BUTTONS
@@ -440,7 +438,6 @@ void OptionsRenderScreen()
             DrawTexture(checkboxesAdvanced[i]->texture[checkboxesAdvanced[i]->isChecked], checkboxesAdvanced[i]->position.x, checkboxesAdvanced[i]->position.y, WHITE);
         }
     }
-
 
     if (nCurrentToolTip > 0)
     {

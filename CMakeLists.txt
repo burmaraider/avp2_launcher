@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
 project (avp2_launcher)
 set(CMAKE_C_STANDARD 17)
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused")
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -62,6 +63,8 @@ if(${PLATFORM} STREQUAL "Windows")
 endif()
 
 set(SOURCE_FILES 
+${SOURCE_DIR}/utils.c
+${SOURCE_DIR}/registry.c
 ${SOURCE_DIR}/Screens/advanced.c
 ${SOURCE_DIR}/Screens/splash.c
 ${SOURCE_DIR}/Screens/display.c

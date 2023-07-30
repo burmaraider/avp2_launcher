@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     OptionsUnloadScreen();
     SplashUnloadScreen();
     DisplayUnloadScreen();
-    
+
     CloseAudioDevice();
 
     ExitWindow(); // Close window and OpenGL context
@@ -124,73 +124,73 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-//There are better ways to do this, but this is the easiest way to do it.
+// There are better ways to do this, but this is the easiest way to do it.
 void ButtonPressCallback(Button *button)
 {
     PlaySoundResource("OK");
 
-    switch(button->id)
+    switch (button->id)
     {
-        case BUTTON_PLAY:
-        {
-            if(Launch(LITHTECH))
-            {
-                bShouldClose = TRUE;
-            }
-            break;
-        }
-        case BUTTON_SERVER:
-        {
-            if(Launch(SERVER))
-            {
-                bShouldClose = TRUE;
-            }
-            break;
-        }
-        case BUTTON_DISPLAY:
-        {
-            g_nCurrentScreen = SCREEN_DISPLAY;
-            DisplaySetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
-            break;
-        }
-        case BUTTON_OPTIONS:
-        {
-            g_nCurrentScreen = SCREEN_OPTIONS;
-            OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
-            break;
-        }
-        case BUTTON_EXIT:
+    case BUTTON_PLAY:
+    {
+        if (Launch(LITHTECH))
         {
             bShouldClose = TRUE;
-            break;
         }
-        case BUTTON_MINIMIZE:
-        {
-            MinimizeWindow();
-            break;
-        }
-        case BUTTON_X:
+        break;
+    }
+    case BUTTON_SERVER:
+    {
+        if (Launch(SERVER))
         {
             bShouldClose = TRUE;
-            break;
         }
-        case BUTTON_OK:
-        {
-            break;
-        }
-        case BUTTON_CANCEL:
-        {
-            break;
-        }
-        case BUTTON_INSTALL:
-        {
-            InstallAVP2Registry();
-            break;
-        }
-        case BUTTON_LITHFAQ:
-        {
-            ShellExecute(NULL, "open", "https://avpunknown.com/avp2aio/", NULL, NULL, SW_SHOWNORMAL);
-            break;
-        }
+        break;
+    }
+    case BUTTON_DISPLAY:
+    {
+        g_nCurrentScreen = SCREEN_DISPLAY;
+        DisplaySetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+        break;
+    }
+    case BUTTON_OPTIONS:
+    {
+        g_nCurrentScreen = SCREEN_OPTIONS;
+        OptionsSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+        break;
+    }
+    case BUTTON_EXIT:
+    {
+        bShouldClose = TRUE;
+        break;
+    }
+    case BUTTON_MINIMIZE:
+    {
+        MinimizeWindow();
+        break;
+    }
+    case BUTTON_X:
+    {
+        bShouldClose = TRUE;
+        break;
+    }
+    case BUTTON_OK:
+    {
+        break;
+    }
+    case BUTTON_CANCEL:
+    {
+        break;
+    }
+    case BUTTON_INSTALL:
+    {
+        InstallAVP2Registry();
+        break;
+    }
+    case BUTTON_LITHFAQ:
+    {
+        ShellExecute(NULL, "open", "https://avpunknown.com/avp2aio/", NULL, NULL, SW_SHOWNORMAL);
+        break;
+    }
     }
 }

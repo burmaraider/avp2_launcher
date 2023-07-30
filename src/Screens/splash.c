@@ -1,11 +1,10 @@
 #include "raylib.h"
 #include <string.h>
 
-//Program Headers
+// Program Headers
 #include "..\include\registry.h"
 #include "..\include\utils.h"
 #include "..\include\Screens\advanced.h"
-
 
 static Button playButton;
 static Button serverButton;
@@ -20,10 +19,8 @@ static Button installButton;
 static Button lithFAQButton;
 static Button **buttons;
 
-
 // predator animation
 static uint32_t nPredatorTextureFrame = 0;
-static Texture tPredatorAnimationTexture;
 static float fPredatorCountdownTimer = 1.0f; // 10 seconds countdown
 
 void SplashSetupScreen()
@@ -135,7 +132,6 @@ void SplashSetupScreen()
     lithFAQButton.id = BUTTON_LITHFAQ;
     lithFAQButton.isEnabled = TRUE;
 
-
     buttons = (Button **)malloc(sizeof(Button *) * SPLASH_BUTTON_COUNT);
 
     if (!buttons)
@@ -147,7 +143,7 @@ void SplashSetupScreen()
     for (size_t i = 0; i < SPLASH_BUTTON_COUNT; i++)
     {
         buttons[i] = (Button *)malloc(sizeof(Button));
-        
+
         if (!buttons[i])
         {
             MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
@@ -167,7 +163,7 @@ void SplashSetupScreen()
     buttons[9] = &installButton;
     buttons[10] = &lithFAQButton;
 
-    if(g_bAVP2Installed)
+    if (g_bAVP2Installed)
     {
         installButton.isEnabled = FALSE;
     }
@@ -179,12 +175,11 @@ void SplashSetupScreen()
         displayButton.isEnabled = FALSE;
         optionsButton.isEnabled = FALSE;
     }
-
 }
 
 void SplashScreenRender()
 {
-    //Start the 2D Canvas
+    // Start the 2D Canvas
     BeginDrawing();
     ClearBackground(BLACK);
 
@@ -205,7 +200,6 @@ void SplashScreenRender()
     EndDrawing();
 }
 
-
 void SplashUnloadScreen()
 {
     // null check
@@ -222,23 +216,19 @@ void SplashUnloadScreen()
     }
     free(buttons);
     buttons = NULL;
-
-    
 }
 
 static void CheckAllButtons()
 {
     for (size_t i = 0; i < SPLASH_BUTTON_COUNT; i++)
     {
-        if (CheckCollisionPointRec(GetMousePosition(), (Rect){buttons[i]->position.x, buttons[i]->position.y, buttons[i]->texture[0].width, buttons[i]->texture[0].height})
-        && buttons[i]->isEnabled == TRUE)
+        if (CheckCollisionPointRec(GetMousePosition(), (Rect){buttons[i]->position.x, buttons[i]->position.y, buttons[i]->texture[0].width, buttons[i]->texture[0].height}) && buttons[i]->isEnabled == TRUE)
         {
             buttons[i]->currentTexture = HOVER;
 
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
             {
                 buttons[i]->currentTexture = DOWN;
-                
             }
 
             if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
@@ -264,7 +254,7 @@ void SplashUpdateLoop()
 
     if (fPredatorCountdownTimer <= 0.0f)
     {
-        fPredatorCountdownTimer = 1.0f;                         // Reset countdown
+        fPredatorCountdownTimer = 1.0f;                           // Reset countdown
         nPredatorTextureFrame = (nPredatorTextureFrame + 1) % 25; // Cycle predator frame
     }
 }

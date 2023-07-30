@@ -13,4 +13,4 @@ void SplashScreenRender();
 void SplashUpdateLoop();
 void SplashUnloadScreen();
 
-#endif //SPLASH_H
+#endif // SPLASH_H

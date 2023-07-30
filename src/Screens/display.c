@@ -16,7 +16,6 @@ static HWND hWndResolutionListBox;
 static HWND hWndRendererListBox;
 static HWND hWndDisplayAdapterListBox;
 static WNDPROC oldWndProc;
-static WNDPROC oldListProc;
 
 // BUTTONS
 static Button xButton;
@@ -24,83 +23,326 @@ static Button okButton;
 static Button cancelButton;
 static Button **buttons;
 
-static Monitor **pMonitorArray;
-uint8_t listboxIndex = 0;
-char szRendererSelection[64];
+uint8_t nResolutionSelection = 0;
 uint8_t nRendererSelection = 0;
 AutoexecCfg *autoexec;
 
 // LOCAL VARIABLES
 static uint32_t nCurrentToolTip = 0;
-static bool bIsClosing = false;
 
 // Function pointers for the original render and update loops
 static void *pOldRenderLoop;
 static void *pOldUpdateLoop;
 
-static RendererInfo pRendererInfo[6];
-static char szDisplay[6][128];
+// static RendererInfo pRendererInfo[6];
 static uint8_t nDisplaySelection = 0;
 
-static void GetModes();
-static void LoadRendererInfo();
+HANDLE hThread1, renderEnumThread;
+static bool bRenderThreadDone = false;
+CRITICAL_SECTION g_csRendererInfo;
+
+static int nRendererCount = 0;
+RendererInfo **pRendererInfo;
+
+DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
+{
+    InitializeCriticalSection(&g_csRendererInfo);
+
+    ThreadParam *pThreadParam = (ThreadParam *)lpParam;
+
+    HWND hWndResolutionList = pThreadParam->hWndResolutionLB;
+    HWND hWndRendererListBox = pThreadParam->hWndRendererLB;
+    HWND hWndDisplayListBox = pThreadParam->hWndDisplayLB;
+
+    // load each .ren file in the directory
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    char szDir[MAX_PATH];
+
+    GetCurrentDirectory(MAX_PATH, szDir);
+    strcat(szDir, "\\*.ren");
+
+    hFind = FindFirstFile(szDir, &FindFileData);
+
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
+        MessageBox(NULL, "Failed to find any .ren files!", "Error", MB_OK | MB_ICONERROR);
+        return 0;
+    }
+    nRendererCount = 0;
+
+    EnterCriticalSection(&g_csRendererInfo);
+
+    pRendererInfo = (RendererInfo **)malloc(sizeof(RendererInfo *) * 1);
+
+    LeaveCriticalSection(&g_csRendererInfo);
+
+    do
+    {
+        bool bIsValidRenderer = true;
+        // load library
+        HMODULE hdll = LoadLibrary(FindFileData.cFileName);
+        if (hdll == NULL)
+        {
+            MessageBox(NULL, "Failed to load .ren file!", "Error", MB_OK | MB_ICONERROR);
+            continue;
+        }
+
+        EnterCriticalSection(&g_csRendererInfo);
+        if (nRendererCount > 0)
+            pRendererInfo = (RendererInfo **)realloc(pRendererInfo, sizeof(RendererInfo *) * (nRendererCount + 1));
+
+        pRendererInfo[nRendererCount] = (RendererInfo *)malloc(sizeof(RendererInfo));
+
+        LoadString(hdll, RDLL_DESCRIPTION_STRINGID, pRendererInfo[nRendererCount]->szModuleName, 256);
+        strcpy(pRendererInfo[nRendererCount]->szModuleFileName, FindFileData.cFileName);
+
+        // use GetSupportedModes in the d3d.ren file to get the supported modes
+        typedef struct RMode *(*GetSupportedModes)(void *);
+        GetSupportedModes pGetSupportedModes = (GetSupportedModes)GetProcAddress(hdll, "GetSupportedModes");
+
+        if (pGetSupportedModes == NULL)
+        {
+            //MessageBox(NULL, "Failed to get GetSupportedModes function!", "Error", MB_OK | MB_ICONERROR);
+            FreeLibrary(hdll);
+            bIsValidRenderer = false;
+            continue;
+        }
+
+        struct RMode *pRenderer = pGetSupportedModes(NULL);
+
+        if (pRenderer == NULL)
+        {
+            //MessageBox(NULL, "Failed to get supported modes!", "Error", MB_OK | MB_ICONERROR);
+            FreeLibrary(hdll);
+            bIsValidRenderer = false;
+            continue;
+        }
+
+        if ((int)pRenderer->m_bHardware != 0 && (int)pRenderer->m_bHardware != 1)
+        {
+            //char szError[256];
+            //sprintf(szError, "Invalid renderer: %s", FindFileData.cFileName);
+            //MessageBox(NULL, szError, "Error", MB_OK | MB_ICONERROR);
+            bIsValidRenderer = false;
+            FreeLibrary(hdll);
+            continue;
+        }
+
+        char szDisplayName[256];
+        memset(szDisplayName, 0, sizeof(szDisplayName));
+
+        int nDisplayCount = 0;
+        int nResolutionCount = 0;
+
+        struct RMode *pMode = pRenderer;
+
+        pRendererInfo[nRendererCount]->nNumDisplays = nDisplayCount + 1;
+        pRendererInfo[nRendererCount]->pDisplays = (Displays **)malloc(sizeof(Displays *) * 1);
+
+        while (pMode != NULL && bIsValidRenderer)
+        {
+            if (pMode == NULL)
+                break;
+
+            // compare display name to szDisplayName
+            if (strcmp(szDisplayName, pMode->m_Description) == 0)
+            {
+                // reaalloc the resolutions array
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions = (Resolution **)realloc(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions, sizeof(Resolution *) * (nResolutionCount + 1));
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions[nResolutionCount] = (Resolution *)malloc(sizeof(Resolution));
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions[nResolutionCount]->nWidth = pMode->m_Width;
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->pResolutions[nResolutionCount]->nHeight = pMode->m_Height;
+
+                nResolutionCount++;
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount - 1]->nNumResolutions = nResolutionCount;
+            }
+            else
+            {
+                // this display name is not in the list, so add it to the list
+                strcpy(szDisplayName, pMode->m_Description);
+
+                nResolutionCount = 0;
+
+                if (nDisplayCount > 0)
+                {
+                    pRendererInfo[nRendererCount]->nNumDisplays = nDisplayCount + 1;
+                    pRendererInfo[nRendererCount]->pDisplays = (Displays **)realloc(pRendererInfo[nRendererCount]->pDisplays, sizeof(Displays *) * (nDisplayCount));
+                }
+
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount] = (Displays *)malloc(sizeof(Displays));
+                strcpy(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->szDisplayName, szDisplayName);
+                strcpy(pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->szInternalName, pMode->m_InternalName);
+
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->pResolutions = (Resolution **)malloc(sizeof(Resolution *) * 1);
+
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->nNumResolutions = nResolutionCount + 1;
+
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->pResolutions[nResolutionCount] = (Resolution *)malloc(sizeof(Resolution));
+
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->pResolutions[nResolutionCount]->nHeight = pMode->m_Height;
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->pResolutions[nResolutionCount]->nWidth = pMode->m_Width;
+
+                nResolutionCount++;
+                pRendererInfo[nRendererCount]->pDisplays[nDisplayCount]->nNumResolutions = nResolutionCount;
+
+                nDisplayCount++;
+            }
+
+            pMode = pMode->m_pNext;
+        }
+
+        LeaveCriticalSection(&g_csRendererInfo);
+
+        // free library
+        FreeLibrary(hdll);
+
+        nRendererCount++;
+
+    } while (FindNextFile(hFind, &FindFileData) != 0);
+
+    FindClose(hFind);
+
+    EnterCriticalSection(&g_csRendererInfo);
+
+    if (nRendererCount > 0)
+    {
+        // loop through all the renderers and displays and resolutions and add them to the listbox
+        for (int i = 0; i < nRendererCount; i++)
+        {
+            char szRenderer[256];
+            sprintf(szRenderer, "%s (%s)", pRendererInfo[i]->szModuleName, pRendererInfo[i]->szModuleFileName);
+            SendMessage(hWndRendererListBox, LB_ADDSTRING, 0, (LPARAM)szRenderer);
+        }
+
+        // select the first renderer
+        SendMessage(hWndRendererListBox, LB_SETCURSEL, 0, 0);
+
+        // add displays to the display listbox
+        for (int i = 0; i < pRendererInfo[nRendererSelection]->nNumDisplays; i++)
+        {
+            char szDisplay[256];
+            sprintf(szDisplay, "%s (%s)", pRendererInfo[nRendererSelection]->pDisplays[i]->szDisplayName, pRendererInfo[nRendererSelection]->pDisplays[i]->szInternalName);
+            SendMessage(hWndDisplayListBox, LB_ADDSTRING, 0, (LPARAM)szDisplay);
+        }
+
+        // select the first display
+        SendMessage(hWndDisplayListBox, LB_SETCURSEL, 0, 0);
+
+        // add resolutions to the resolution listbox based on nDisplaySelection
+        for (int j = 0; j < pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->nNumResolutions; j++)
+        {
+            char szResolution[256];
+            sprintf(szResolution, "%dx%d",
+                    pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nWidth,
+                    pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nHeight);
+            SendMessage(hWndResolutionList, LB_ADDSTRING, 0, (LPARAM)szResolution);
+        }
+
+        // select the first resolution
+        SendMessage(hWndResolutionList, LB_SETCURSEL, 0, 0);
+    }
+    bRenderThreadDone = TRUE;
+    free(lpParam);
+    LeaveCriticalSection(&g_csRendererInfo);
+
+    return 0;
+}
 
 // callback
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-        case WM_COMMAND:
+    case WM_COMMAND:
+    {
+        if ((HWND)lParam == hWndResolutionListBox)
         {
-            if ((HWND)lParam == hWndResolutionListBox)
+            if (HIWORD(wParam) == LBN_SELCHANGE)
             {
-                if (HIWORD(wParam) == LBN_SELCHANGE)
-                {
-                    listboxIndex = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
-                }
-            }
-            else if((HWND)lParam == hWndRendererListBox)
-            {
-                if (HIWORD(wParam) == LBN_SELCHANGE)
-                {
-                    nRendererSelection = (uint8_t)SendMessage(hWndRendererListBox, LB_GETCURSEL, 0, 0);
-                }
-                memset(szRendererSelection, 0, sizeof(szRendererSelection));
-                strcpy(szRendererSelection, pRendererInfo[nRendererSelection].szModuleFileName);
-                UpdateKeyInList(autoexec, "RENDERDLL", szRendererSelection);
-                TraceLog(LOG_INFO, "Renderer Selection: %s", szRendererSelection);
-            }
-            else if((HWND)lParam == hWndDisplayAdapterListBox)
-            {
-                nDisplaySelection = (uint8_t)SendMessage(hWndDisplayAdapterListBox, LB_GETCURSEL, 0, 0);
+                nResolutionSelection = (uint8_t)SendMessage(hWndResolutionListBox, LB_GETCURSEL, 0, 0);
             }
         }
-        case WM_CTLCOLORLISTBOX:
+        else if ((HWND)lParam == hWndRendererListBox) // hWndDisplayListBox
         {
+            if (HIWORD(wParam) == LBN_SELCHANGE)
+            {
+                nRendererSelection = (uint8_t)SendMessage(hWndRendererListBox, LB_GETCURSEL, 0, 0);
 
-            if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
-            {
-                HDC dc = (HDC)wParam;
-                SetBkMode(dc, OPAQUE);
-                SetTextColor(dc, RGB(0, 255, 0));
-                SetBkColor(dc, RGB(0, 0, 0));
-                HBRUSH comboBrush = CreateSolidBrush(RGB(0, 0, 0));
-                return (LRESULT)comboBrush;
+                // clear display listbox
+                SendMessage(hWndDisplayAdapterListBox, LB_RESETCONTENT, 0, 0);
+
+                // clear resolution listbox
+                SendMessage(hWndResolutionListBox, LB_RESETCONTENT, 0, 0);
+
+                // add displays to the display listbox from the selected renderer
+                for (int i = 0; i < pRendererInfo[nRendererSelection]->nNumDisplays; i++)
+                {
+                    char szDisplay[256];
+                    sprintf(szDisplay, "%s (%s)", pRendererInfo[nRendererSelection]->pDisplays[i]->szDisplayName, pRendererInfo[nRendererSelection]->pDisplays[i]->szInternalName);
+                    SendMessage(hWndDisplayAdapterListBox, LB_ADDSTRING, 0, (LPARAM)szDisplay);
+                }
+
+                // select the first display
+                SendMessage(hWndDisplayAdapterListBox, LB_SETCURSEL, 0, 0);
+
+                // add resolutions to the resolution listbox based on nDisplaySelection
+                for (int j = 0; j < pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->nNumResolutions; j++)
+                {
+                    char szResolution[256];
+                    sprintf(szResolution, "%dx%d",
+                            pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nWidth,
+                            pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nHeight);
+                    SendMessage(hWndResolutionListBox, LB_ADDSTRING, 0, (LPARAM)szResolution);
+                }
+
+                SendMessage(hWndResolutionListBox, LB_SETCURSEL, 0, 0);
             }
         }
-        case WM_CTLCOLOREDIT:
+        else if ((HWND)lParam == hWndDisplayAdapterListBox)
         {
-            HWND hWnd = (HWND)lParam;
-            HDC dc = (HDC)wParam;
-            if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
+            nDisplaySelection = (uint8_t)SendMessage(hWndDisplayAdapterListBox, LB_GETCURSEL, 0, 0);
+
+            // clear resolution listbox
+            SendMessage(hWndResolutionListBox, LB_RESETCONTENT, 0, 0);
+
+            // add resolutions to the resolution listbox based on nDisplaySelection
+            for (int j = 0; j < pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->nNumResolutions; j++)
             {
-                SetBkMode(dc, OPAQUE);
-                SetTextColor(dc, RGB(0, 255, 0));
-                SetBkColor(dc, RGB(0, 0, 0));                   // 0x383838
-                HBRUSH comboBrush = CreateSolidBrush(0x383838); // global var
-                return (LRESULT)comboBrush;
+                char szResolution[256];
+                sprintf(szResolution, "%dx%d",
+                        pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nWidth,
+                        pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[j]->nHeight);
+                SendMessage(hWndResolutionListBox, LB_ADDSTRING, 0, (LPARAM)szResolution);
             }
+            SendMessage(hWndResolutionListBox, LB_SETCURSEL, 0, 0);
         }
+    }
+    case WM_CTLCOLORLISTBOX:
+    {
+
+        if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
+        {
+            HDC dc = (HDC)wParam;
+            SetBkMode(dc, OPAQUE);
+            SetTextColor(dc, RGB(0, 255, 0));
+            SetBkColor(dc, RGB(0, 0, 0));
+            HBRUSH comboBrush = CreateSolidBrush(RGB(0, 0, 0));
+            return (LRESULT)comboBrush;
+        }
+    }
+    case WM_CTLCOLOREDIT:
+    {
+        HDC dc = (HDC)wParam;
+        if ((HWND)lParam == hWndResolutionListBox || (HWND)lParam == hWndRendererListBox || (HWND)lParam == hWndDisplayAdapterListBox)
+        {
+            SetBkMode(dc, OPAQUE);
+            SetTextColor(dc, RGB(0, 255, 0));
+            SetBkColor(dc, RGB(0, 0, 0)); // 0x383838
+            HBRUSH comboBrush = CreateSolidBrush(RGB(0, 0, 0));
+            return (LRESULT)comboBrush;
+        }
+    }
     }
     return CallWindowProc(oldWndProc, hWnd, message, wParam, lParam);
 }
@@ -115,20 +357,20 @@ static void OnButtonPressOK(Button *button)
     ScreenUpdateLoop = pOldUpdateLoop;
     ScreenRenderLoop = pOldRenderLoop;
 
-    //save the settings to autoexec.cfg
-    UpdateKeyInList(autoexec, "RENDERDLL", szRendererSelection);
+    // save the settings to autoexec.cfg
+    UpdateKeyInList(autoexec, "RENDERDLL", pRendererInfo[nRendererSelection]->szModuleFileName);
 
-    //convert int to string
+    // convert int to string
     char szWidth[8];
     char szHeight[8];
-    itoa(pMonitorArray[0]->modes[listboxIndex]->width, szWidth, 10);
-    itoa(pMonitorArray[0]->modes[listboxIndex]->height, szHeight, 10);
+    itoa(pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[nResolutionSelection]->nWidth, szWidth, 10);
+    itoa(pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->pResolutions[nResolutionSelection]->nHeight, szHeight, 10);
 
     UpdateKeyInList(autoexec, "SCREENWIDTH", szWidth);
     UpdateKeyInList(autoexec, "SCREENHEIGHT", szHeight);
     UpdateKeyInList(autoexec, "GameScreenHeight", szHeight);
     UpdateKeyInList(autoexec, "GameScreenWidth", szWidth);
-    UpdateKeyInList(autoexec, "CARDDESC", szDisplay[nDisplaySelection]);
+    UpdateKeyInList(autoexec, "CARDDESC", pRendererInfo[nRendererSelection]->pDisplays[nDisplaySelection]->szInternalName);
 
     SaveConfig(autoexec);
 
@@ -148,8 +390,6 @@ static void OnButtonPressCancel(Button *button)
     ScreenUpdateLoop = pOldUpdateLoop;
     ScreenRenderLoop = pOldRenderLoop;
 
-    
-
     ShowWindow(hWndResolutionListBox, SW_HIDE);
     ShowWindow(hWndRendererListBox, SW_HIDE);
     ShowWindow(hWndDisplayAdapterListBox, SW_HIDE);
@@ -157,6 +397,8 @@ static void OnButtonPressCancel(Button *button)
 
 void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 {
+    static bool bFirstTime = TRUE;
+
     // save old render and update loops
     pOldRenderLoop = pRenderLoop;
     pOldUpdateLoop = pUpdateLoop;
@@ -167,13 +409,9 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
     SetProcessDpiAware();
 
-    // get the monitors
-    int monitorCount = 0;
-    // monitors = (Monitor **)malloc(sizeof(Monitor *) * 1);
-
     g_hWnd = GetWindowHandle();
 
-    if (!hWndResolutionListBox)
+    if (bFirstTime)
     {
 
         hWndResolutionListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("1"),
@@ -201,36 +439,18 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // set callback
         oldWndProc = (WNDPROC)SetWindowLongPtr(g_hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
-        GetModes();
-        LoadRendererInfo();
+        autoexec = (AutoexecCfg *)malloc(sizeof(AutoexecCfg));
+        autoexec->nType = 0;
+        autoexec->pNext = NULL;
+        autoexec->szKey = NULL;
+        autoexec->szValue = NULL;
 
-        
+        LoadAutoexecCfg(autoexec);
 
-
-        int numAdapters = 0;
-        DISPLAY_DEVICE dd;
-        dd.cb = sizeof(DISPLAY_DEVICE);
-
-        for (DWORD i = 0; EnumDisplayDevices(NULL, i, &dd, 0); i++)
-        {
-            if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) && !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER))
-            {
-                char szBuffer[256];
-                sprintf(szBuffer, "%s (%s)", dd.DeviceString, dd.DeviceName);
-                SendMessage(hWndDisplayAdapterListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)szBuffer);
-                strcat(szDisplay[numAdapters], dd.DeviceName);
-                numAdapters++;
-            }
-        }
-
-        for (int i = 0; i < pMonitorArray[0]->modeCount; i++)
-        {
-            // build string width x height
-            char *temp = (char *)malloc(256);
-            sprintf(temp, "%d x %d", pMonitorArray[0]->modes[i]->width, pMonitorArray[0]->modes[i]->height);
-            SendMessage(hWndResolutionListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)temp);
-        }
-
+        // remove first node its nulled - #TODO: fix this
+        void *temp = autoexec;
+        autoexec = autoexec->pNext;
+        free(temp);
     }
     else
     {
@@ -242,88 +462,77 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
     SetWindowSize(600, 394);
 
-    // x button
-    if (xButton.texture[0].id == 0)
+    if (bFirstTime)
     {
-        LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
-        LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
-        LoadTextureFromResource(&xButton.texture[2], "CLOSED");
-    }
-    xButton.position = (Vector2){579, 1};
-    xButton.onPress = OnButtonPressCancel;
-    xButton.onUnload = UnloadButton;
-    xButton.isEnabled = TRUE;
 
-    // generic
-    if (okButton.texture[0].id == 0)
-    {
-        LoadTextureFromResource(&okButton.texture[0], "OKU");
-        LoadTextureFromResource(&okButton.texture[1], "OKF");
-        LoadTextureFromResource(&okButton.texture[2], "OKD");
-    }
-    okButton.position = (Vector2){194, 349};
-    okButton.onPress = OnButtonPressOK;
-    okButton.onUnload = UnloadButton;
-    okButton.isEnabled = TRUE;
+        // x button
+        if (xButton.texture[0].id == 0)
+        {
+            LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
+            LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
+            LoadTextureFromResource(&xButton.texture[2], "CLOSED");
+        }
+        xButton.position = (Vector2){579, 1};
+        xButton.onPress = OnButtonPressCancel;
+        xButton.onUnload = UnloadButton;
+        xButton.isEnabled = TRUE;
 
-    if (cancelButton.texture[0].id == 0)
-    {
-        LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
-        LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
-        LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
-    }
-    cancelButton.position = (Vector2){306, 349};
-    cancelButton.onPress = OnButtonPressCancel;
-    cancelButton.onUnload = UnloadButton;
-    cancelButton.isEnabled = TRUE;
+        // generic
+        if (okButton.texture[0].id == 0)
+        {
+            LoadTextureFromResource(&okButton.texture[0], "OKU");
+            LoadTextureFromResource(&okButton.texture[1], "OKF");
+            LoadTextureFromResource(&okButton.texture[2], "OKD");
+        }
+        okButton.position = (Vector2){194, 349};
+        okButton.onPress = OnButtonPressOK;
+        okButton.onUnload = UnloadButton;
+        okButton.isEnabled = TRUE;
 
-    // seTUP BUTTONS
-    buttons = (Button **)malloc(sizeof(Button *) * DISPLAY_BUTTON_COUNT);
+        if (cancelButton.texture[0].id == 0)
+        {
+            LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
+            LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
+            LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
+        }
+        cancelButton.position = (Vector2){306, 349};
+        cancelButton.onPress = OnButtonPressCancel;
+        cancelButton.onUnload = UnloadButton;
+        cancelButton.isEnabled = TRUE;
 
-    if (!buttons)
-    {
-        MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
-        exit(1);
-    }
+        // seTUP BUTTONS
+        buttons = (Button **)malloc(sizeof(Button *) * DISPLAY_BUTTON_COUNT);
 
-    for (size_t i = 0; i < DISPLAY_BUTTON_COUNT; i++)
-    {
-        buttons[i] = (Button *)malloc(sizeof(Button));
-
-        if (!buttons[i])
+        if (!buttons)
         {
             MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
             exit(1);
         }
+
+        for (size_t i = 0; i < DISPLAY_BUTTON_COUNT; i++)
+        {
+            buttons[i] = (Button *)malloc(sizeof(Button));
+
+            if (!buttons[i])
+            {
+                MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
+                exit(1);
+            }
+        }
+
+        buttons[0] = &okButton;
+        buttons[1] = &cancelButton;
+        buttons[2] = &xButton;
+
+        // Create thread for GetModes function
+        pThreadParam pThreadInfo = (pThreadParam)malloc(sizeof(ThreadParam));
+        pThreadInfo->hWndRendererLB = hWndRendererListBox;
+        pThreadInfo->hWndResolutionLB = hWndResolutionListBox;
+        pThreadInfo->hWndDisplayLB = hWndDisplayAdapterListBox;
+
+        renderEnumThread = CreateThread(NULL, 0, LoadRendererInfoThread, (LPVOID)pThreadInfo, 0, NULL);
+        bFirstTime = FALSE;
     }
-
-    buttons[0] = &okButton;
-    buttons[1] = &cancelButton;
-    buttons[2] = &xButton;
-
-    //Load autoexec.cfg file 
-    autoexec = (AutoexecCfg*)malloc(sizeof(AutoexecCfg));
-    autoexec->nType = 0;
-    autoexec->pNext = NULL;
-    autoexec->szKey = NULL;
-    autoexec->szValue = NULL;
-
-
-    LoadAutoexecCfg(autoexec);
-
-    //remove first node its nulled - #TODO: fix this
-    void *temp = autoexec;
-    autoexec = autoexec->pNext;
-    free(temp);
-
-    //select index 0
-    //focus on resolution listbox
-    SetFocus(hWndResolutionListBox);
-    SendMessage(hWndResolutionListBox, LB_SETCURSEL, 0, 0);
-    SetFocus(hWndRendererListBox);
-    SendMessage(hWndRendererListBox, LB_SETCURSEL, 0, 0);
-    SetFocus(hWndDisplayAdapterListBox);
-    SendMessage(hWndDisplayAdapterListBox, LB_SETCURSEL, 0, 0);
 }
 
 void DisplayRenderScreen()
@@ -370,10 +579,27 @@ void DisplayUnloadScreen()
     }
     free(buttons);
     buttons = NULL;
-    
-    FreeList(autoexec);
-    FreeModes(pMonitorArray);
 
+    // free memory in pRendererInfo array
+    for (size_t renderIndex = 0; renderIndex < nRendererCount; renderIndex++)
+    {
+        for (size_t displayIndex = 0; displayIndex < pRendererInfo[renderIndex]->nNumDisplays; displayIndex++)
+        {
+            for (size_t resolutionIndex = 0; resolutionIndex < pRendererInfo[renderIndex]->pDisplays[displayIndex]->nNumResolutions; resolutionIndex++)
+            {
+                free(pRendererInfo[renderIndex]->pDisplays[displayIndex]->pResolutions[resolutionIndex]);
+                pRendererInfo[renderIndex]->pDisplays[displayIndex]->pResolutions[resolutionIndex] = NULL;
+            }
+
+            free(pRendererInfo[renderIndex]->pDisplays[displayIndex]->pResolutions);
+            pRendererInfo[renderIndex]->pDisplays[displayIndex]->pResolutions = NULL;
+        }
+        free(pRendererInfo[renderIndex]);
+        pRendererInfo[renderIndex] = NULL;
+    }
+    free(pRendererInfo);
+
+    FreeList(autoexec);
 }
 
 static void CheckAllButtons()
@@ -406,170 +632,17 @@ static void CheckAllButtons()
 
 void DisplayUpdateLoop()
 {
+
+    if (bRenderThreadDone)
+    {
+        // free thread
+        CloseHandle(renderEnumThread);
+        renderEnumThread = NULL;
+
+        // force refresh of renderer listbox
+        bRenderThreadDone = FALSE;
+    }
+
     nCurrentToolTip = 0;
     CheckAllButtons();
-}
-
-static void GetModes()
-{
-
-    // enumerate display adapters
-    int adapterCount = 0;
-    int monitorCount = 0;
-    int modeCount = 0;
-    int adapterIndex = 0;
-    int monitorIndex = 0;
-    int modeIndex = 0;
-
-    // get number of adapters using glfwGetMonitors
-    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
-
-    // initialize mon array and calloc
-    pMonitorArray = calloc(monitorCount, sizeof(Monitor *));
-
-
-    const GLubyte *renderer = glGetString(GL_RENDERER);
-
-    if (pMonitorArray == NULL)
-    {
-        TraceLog(LOG_ERROR, "Failed to allocate memory for monitors!");
-        exit(1);
-    }
-
-    // get modes for each adapter
-    for (monitorIndex = 0; monitorIndex < monitorCount; monitorIndex++)
-    {
-        pMonitorArray[monitorIndex] = calloc(1, sizeof(Monitor));
-
-        if (pMonitorArray[monitorIndex] == NULL)
-        {
-            TraceLog(LOG_ERROR, "Failed to allocate memory for monitor!");
-            exit(1);
-        }
-
-        const GLFWvidmode *modes = glfwGetVideoModes(monitors[monitorIndex], &modeCount);
-        pMonitorArray[monitorIndex]->modeCount = modeCount;
-
-        pMonitorArray[monitorIndex]->modes = calloc(modeCount, sizeof(Mode *));
-
-        if (pMonitorArray[monitorIndex]->modes == NULL)
-        {
-            TraceLog(LOG_ERROR, "Failed to allocate memory for modes!");
-            exit(1);
-        }
-
-        for (modeIndex = 0; modeIndex < modeCount; modeIndex++)
-        {
-            pMonitorArray[monitorIndex]->modes[modeIndex] = calloc(1, sizeof(Mode));
-
-            if (pMonitorArray[monitorIndex]->modes[modeIndex] == NULL)
-            {
-                TraceLog(LOG_ERROR, "Failed to allocate memory for mode!");
-                exit(1);
-            }
-
-            pMonitorArray[monitorIndex]->modes[modeIndex]->width = modes[modeIndex].width;
-            pMonitorArray[monitorIndex]->modes[modeIndex]->height = modes[modeIndex].height;
-            pMonitorArray[monitorIndex]->modes[modeIndex]->refreshRate = modes[modeIndex].refreshRate;
-
-            TraceLog(LOG_INFO, "Adapter %i, Mode %i: %i x %i", monitorIndex, modeIndex, modes[modeIndex].width, modes[modeIndex].height);
-        }
-
-        // Remove duplicate and non-standard modes
-        for (modeIndex = 0; modeIndex < pMonitorArray[monitorIndex]->modeCount; modeIndex++)
-        {
-            float aspectRatio = (float)pMonitorArray[monitorIndex]->modes[modeIndex]->width / (float)pMonitorArray[monitorIndex]->modes[modeIndex]->height;
-            const float expectedAspectRatio[] = {4.0f / 3.0f, 16.0f / 9.0f, 21.5f / 9.0f, 16.0f / 10.0f};
-            bool isExpectedAspectRatio = FALSE;
-
-            for (size_t i = 0; i < sizeof(expectedAspectRatio) / sizeof(expectedAspectRatio[0]); i++)
-            {
-                if (fabs(aspectRatio - expectedAspectRatio[i]) < 0.001f)
-                {
-                    isExpectedAspectRatio = TRUE;
-                    break;
-                }
-            }
-
-            if (!isExpectedAspectRatio)
-            {
-                // Free the memory used by the removed mode
-                free(pMonitorArray[monitorIndex]->modes[modeIndex]);
-                pMonitorArray[monitorIndex]->modes[modeIndex] = NULL;
-
-                // Shift the remaining modes to fill the gap
-                memmove(&pMonitorArray[monitorIndex]->modes[modeIndex], &pMonitorArray[monitorIndex]->modes[modeIndex + 1], (pMonitorArray[monitorIndex]->modeCount - modeIndex - 1) * sizeof(Mode *));
-                pMonitorArray[monitorIndex]->modeCount--;
-
-                TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed non-standard mode", monitorIndex, modeIndex);
-                modeIndex--;
-            }
-            else
-            {
-                for (size_t otherIndex = modeIndex + 1; otherIndex < pMonitorArray[monitorIndex]->modeCount; otherIndex++)
-                {
-                    if (pMonitorArray[monitorIndex]->modes[modeIndex]->width == pMonitorArray[monitorIndex]->modes[otherIndex]->width &&
-                        pMonitorArray[monitorIndex]->modes[modeIndex]->height == pMonitorArray[monitorIndex]->modes[otherIndex]->height)
-                    {
-                        // Free the memory used by the removed mode
-                        free(pMonitorArray[monitorIndex]->modes[otherIndex]);
-                        pMonitorArray[monitorIndex]->modes[otherIndex] = NULL;
-
-                        // Shift the remaining modes to fill the gap
-                        memmove(&pMonitorArray[monitorIndex]->modes[otherIndex], &pMonitorArray[monitorIndex]->modes[otherIndex + 1], (pMonitorArray[monitorIndex]->modeCount - otherIndex - 1) * sizeof(Mode *));
-                        pMonitorArray[monitorIndex]->modeCount--;
-
-                        TraceLog(LOG_INFO, "Adapter %i, Mode %i: Removed duplicate mode", monitorIndex, otherIndex);
-                        otherIndex--;
-                    }
-                }
-            }
-        }
-    }
-
-    TraceLog(LOG_INFO, "Number of monitors: %i", monitorCount);
-}
-
-static void LoadRendererInfo()
-{
-    //load each .ren file in the directory
-    WIN32_FIND_DATA FindFileData;
-    HANDLE hFind = INVALID_HANDLE_VALUE;
-    char szDir[MAX_PATH];
-    char szTempString[256];
-
-    GetCurrentDirectory(MAX_PATH, szDir);
-    strcat(szDir, "\\*.ren");
-
-    hFind = FindFirstFile(szDir, &FindFileData);
-
-    if (hFind == INVALID_HANDLE_VALUE)
-    {
-        MessageBox(NULL, "Failed to find any .ren files!", "Error", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    uint8_t nRendererCount = 0;
-    do
-    {
-        //load library
-        HMODULE hdll = LoadLibrary(FindFileData.cFileName);
-        if (hdll == NULL)
-        {
-            MessageBox(NULL, "Failed to load .ren file!", "Error", MB_OK | MB_ICONERROR);
-            continue;
-        }
-
-        LoadString(hdll, 5, pRendererInfo[nRendererCount].szModuleName, 256);
-        strcpy(pRendererInfo[nRendererCount].szModuleFileName, FindFileData.cFileName);
-
-        sprintf(szTempString, "%s (%s)", pRendererInfo[nRendererCount].szModuleName, pRendererInfo[nRendererCount].szModuleFileName);
-
-        //add string to listbox
-        SendMessage(hWndRendererListBox, (UINT)LB_ADDSTRING, (WPARAM)0, (LPARAM)szTempString);
-
-        //free library
-        FreeLibrary(hdll);
-
-    } while (FindNextFile(hFind, &FindFileData) != 0);
 }
