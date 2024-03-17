@@ -66,6 +66,7 @@ void ServerlistUpdateLoop(void)
         //reset the flag
         bSocketThreadDone = false;
     }
+    
 }
 void ServerlistUnloadScreen(void)
 {
