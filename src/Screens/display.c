@@ -103,7 +103,7 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
 
         if (pGetSupportedModes == NULL)
         {
-            //MessageBox(NULL, "Failed to get GetSupportedModes function!", "Error", MB_OK | MB_ICONERROR);
+            // MessageBox(NULL, "Failed to get GetSupportedModes function!", "Error", MB_OK | MB_ICONERROR);
             FreeLibrary(hdll);
             bIsValidRenderer = false;
             continue;
@@ -113,7 +113,7 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
 
         if (pRenderer == NULL)
         {
-            //MessageBox(NULL, "Failed to get supported modes!", "Error", MB_OK | MB_ICONERROR);
+            // MessageBox(NULL, "Failed to get supported modes!", "Error", MB_OK | MB_ICONERROR);
             FreeLibrary(hdll);
             bIsValidRenderer = false;
             continue;
@@ -121,9 +121,9 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
 
         if ((int)pRenderer->m_bHardware != 0 && (int)pRenderer->m_bHardware != 1)
         {
-            //char szError[256];
-            //sprintf(szError, "Invalid renderer: %s", FindFileData.cFileName);
-            //MessageBox(NULL, szError, "Error", MB_OK | MB_ICONERROR);
+            // char szError[256];
+            // sprintf(szError, "Invalid renderer: %s", FindFileData.cFileName);
+            // MessageBox(NULL, szError, "Error", MB_OK | MB_ICONERROR);
             bIsValidRenderer = false;
             FreeLibrary(hdll);
             continue;
@@ -167,7 +167,7 @@ DWORD WINAPI LoadRendererInfoThread(LPVOID lpParam)
                 if (nDisplayCount > 0)
                 {
                     pRendererInfo[nRendererCount]->nNumDisplays = nDisplayCount + 1;
-                    pRendererInfo[nRendererCount]->pDisplays = (Displays **)realloc(pRendererInfo[nRendererCount]->pDisplays, sizeof(Displays *) * (nDisplayCount +1));
+                    pRendererInfo[nRendererCount]->pDisplays = (Displays **)realloc(pRendererInfo[nRendererCount]->pDisplays, sizeof(Displays *) * (nDisplayCount + 1));
                 }
 
                 pRendererInfo[nRendererCount]->pDisplays[nDisplayCount] = (Displays *)malloc(sizeof(Displays));
@@ -535,7 +535,7 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
     }
 }
 
-void DisplayRenderScreen()
+void DisplayRenderScreen(void)
 {
     // Start the 2D Canvas
     BeginDrawing();
@@ -563,7 +563,7 @@ void DisplayRenderScreen()
     EndDrawing();
 }
 
-void DisplayUnloadScreen()
+void DisplayUnloadScreen(void)
 {
     // null check
     if (buttons == NULL)
@@ -602,7 +602,7 @@ void DisplayUnloadScreen()
     FreeList(autoexec);
 }
 
-static void CheckAllButtons()
+static void CheckAllButtons(void)
 {
 
     for (size_t i = 0; i < DISPLAY_BUTTON_COUNT; i++)
@@ -630,7 +630,7 @@ static void CheckAllButtons()
     }
 }
 
-void DisplayUpdateLoop()
+void DisplayUpdateLoop(void)
 {
 
     if (bRenderThreadDone)

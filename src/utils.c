@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 
-
 void PlaySoundResource(const char *szName)
 {
     HMODULE hInst = GetModuleHandle(NULL);
@@ -45,7 +44,7 @@ void PlaySoundResource(const char *szName)
     UnloadWave(wave);
 }
 
-void PlayRandomIntroSound()
+void PlayRandomIntroSound(void)
 {
     InitAudioDevice();
 
@@ -55,7 +54,7 @@ void PlayRandomIntroSound()
     PlaySoundResource(AVP2_LAUNCHER_INTRO[random]);
 }
 
-void LoadBackgroundImages()
+void LoadBackgroundImages(void)
 {
     HMODULE hInst = GetModuleHandle(NULL);
 
@@ -124,7 +123,7 @@ void LoadTextureFromResource(Texture *pTexture, const char *name)
     free(pData);
 }
 
-void Loader_InitializeBackgroundTextures()
+void Loader_InitializeBackgroundTextures(void)
 {
     // Set the window icon
     HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON));
@@ -221,7 +220,7 @@ char *FormatStringWithNewLines(const char *szString, Rect rTextDrawArea)
     return szFormattedString;
 }
 
-void DragWindow()
+void DragWindow(void)
 {
     static Vector2 initialMousePosition = {0, 0};
     static bool bIsDragging = FALSE;
@@ -375,7 +374,7 @@ void LoadAutoexecCfg(AutoexecCfg *config)
     FILE *fp = fopen("autoexec.cfg", "r");
     if (fp == NULL)
     {
-        //TraceLog(LOG_WARNING, "AUTOEXEC: Failed to open autoexec.cfg");
+        // TraceLog(LOG_WARNING, "AUTOEXEC: Failed to open autoexec.cfg");
         return;
     }
 
@@ -398,7 +397,7 @@ void LoadAutoexecCfg(AutoexecCfg *config)
             char *p = strchr(szLine + 1, '"');
             if (p == NULL)
             {
-                //TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
+                // TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
                 continue;
             }
             strncpy(szName, szLine + 1, p - szLine - 1);
@@ -408,7 +407,7 @@ void LoadAutoexecCfg(AutoexecCfg *config)
             p = strchr(p + 1, '"');
             if (p == NULL)
             {
-                //TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
+                // TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
                 continue;
             }
 
@@ -428,7 +427,7 @@ void LoadAutoexecCfg(AutoexecCfg *config)
             char *p = strchr(szLine, ' ');
             if (p == NULL)
             {
-                //TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
+                // TraceLog(LOG_WARNING, "AUTOEXEC: Failed to parse autoexec.cfg");
                 continue;
             }
             strncpy(szName, szLine, p - szLine);
@@ -455,7 +454,7 @@ void SaveConfig(AutoexecCfg *list)
     FILE *fp = fopen("autoexec.cfg", "w");
     if (fp == NULL)
     {
-        //TraceLog(LOG_WARNING, "AUTOEXEC: Failed to open autoexec.cfg");
+        // TraceLog(LOG_WARNING, "AUTOEXEC: Failed to open autoexec.cfg");
         return;
     }
 

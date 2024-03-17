@@ -50,7 +50,7 @@ static void CheckboxPress(Checkbox *checkbox)
     PlaySoundResource("OK");
 }
 
-void OptionsUnloadScreen()
+void OptionsUnloadScreen(void)
 {
     bIsClosing = true;
 
@@ -85,7 +85,7 @@ void OptionsUnloadScreen()
     checkboxesAdvanced = NULL;
 }
 
-static void SaveSettingsToRegistry()
+static void SaveSettingsToRegistry(void)
 {
 
     DWORD nDisableHardwareCursor = (DWORD)g_Settings.nDisableHardwareCursor;
@@ -148,7 +148,7 @@ static void OnButtonPressCancel(Button *button)
     ScreenRenderLoop = pOldRenderLoop;
 }
 
-static void SetupCheckBoxesState()
+static void SetupCheckBoxesState(void)
 {
     saveCommands.isChecked = g_Settings.nSaveCommands;
     disableSound.isChecked = g_Settings.nDisableSound;
@@ -415,7 +415,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     buttons[2] = &xButton;
 }
 
-void OptionsRenderScreen()
+void OptionsRenderScreen(void)
 {
     // Start the 2D Canvas
     BeginDrawing();
@@ -451,7 +451,7 @@ void OptionsRenderScreen()
     EndDrawing();
 }
 
-static void CheckAllCheckBoxes()
+static void CheckAllCheckBoxes(void)
 {
     for (size_t i = 0; i < OPTIONS_CHECKBOX_COUNT; i++)
     {
@@ -481,7 +481,7 @@ static void CheckAllCheckBoxes()
     }
 }
 
-static void CheckAllButtons()
+static void CheckAllButtons(void)
 {
 
     for (size_t i = 0; i < OPTIONS_BUTTON_COUNT; i++)
@@ -509,7 +509,7 @@ static void CheckAllButtons()
     }
 }
 
-void OptionsUpdateLoop()
+void OptionsUpdateLoop(void)
 {
     nCurrentToolTip = 0;
     CheckAllButtons();

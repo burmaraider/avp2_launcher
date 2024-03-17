@@ -9,8 +9,8 @@
 #include "..\constants.h"
 
 void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop);
-void OptionsRenderScreen();
-void OptionsUpdateLoop();
-void OptionsUnloadScreen();
+void OptionsRenderScreen(void);
+void OptionsUpdateLoop(void);
+void OptionsUnloadScreen(void);
 
 #endif

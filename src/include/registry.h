@@ -30,10 +30,10 @@ char *GetRegistryString(HKEY hK, const char *StringName, char *valueBuffer, DWOR
 /// @return  True if the registry entries were found, false otherwise
 bool GetRegistryEntries();
 
-BOOL IsRunAsAdministrator();
+BOOL IsRunAsAdministrator(void);
 /// @brief This function installs the registry entries for the launcher and will launch the launcher as administrator if it isn't already running as administrator
 /// @return  True if the registry entries were installed, false otherwise
-bool InstallAVP2Registry();
+bool InstallAVP2Registry(void);
 
 void SetRegistryValue(HKEY hKey, const char *pszValueName, DWORD dwType, const void *pData, DWORD dwDataSize);
 

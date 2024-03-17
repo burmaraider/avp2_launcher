@@ -2,6 +2,8 @@
 #define UTILS_H
 
 // Windows headers
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <Windows.h>
 #include <shellscalingapi.h> //used to get DPI scaling
 #include <winerror.h>
@@ -23,29 +25,29 @@
 #include "types.h"
 #include <GLFW/glfw3.h>
 
-//SOUND STUFF
+// SOUND STUFF
 void PlaySoundResource(const char *szName);
-void PlayRandomIntroSound();
+void PlayRandomIntroSound(void);
 
-//TEXTURE STUFF
-void LoadBackgroundImages();
+// TEXTURE STUFF
+void LoadBackgroundImages(void);
 void LoadTextureFromResource(Texture *pTexture, const char *name);
 void Loader_InitializeBackgroundTextures();
 
-//DPI SCALING STUFF
+// DPI SCALING STUFF
 typedef BOOL(WINAPI *SETPROCESSDPIAWARE_T)(void);
 typedef HRESULT(WINAPI *SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
 bool SetProcessDpiAware(void);
 
-//TEXT HELPERS
+// TEXT HELPERS
 char *FormatStringWithNewLines(const char *szString, Rect rTextDrawArea);
 
-//GUI STUFF
-void DragWindow();
+// GUI STUFF
+void DragWindow(void);
 void UnloadButton(Button *button);
 void UnloadCheckBox(Checkbox *checkbox);
 
-//CONFIG STUFF
+// CONFIG STUFF
 void AddToList(AutoexecCfg *list, int nType, char *szKey, char *szValue);
 void FreeList(AutoexecCfg *list);
 AutoexecCfg *FindKeyInList(AutoexecCfg *list, char *szSearchKey);
@@ -53,7 +55,10 @@ void UpdateKeyInList(AutoexecCfg *list, char *szSearchKey, char *szNewValue);
 void LoadAutoexecCfg(AutoexecCfg *config);
 void SaveConfig(AutoexecCfg *list);
 
-//LAUNCH STUFF
+// LAUNCH STUFF
 bool Launch(DWORD nExecutable);
+
+//SERVERLIST STUFF - NETWORKING
+
 
 #endif // UTILS_H

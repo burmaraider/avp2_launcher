@@ -128,7 +128,7 @@ typedef struct rendererInfo_t
     char szModuleFileName[256];
     int nNumDisplays;
     Displays **pDisplays;
-}RendererInfo;
+} RendererInfo;
 
 typedef struct threadParam_t
 {
@@ -136,5 +136,18 @@ typedef struct threadParam_t
     HWND hWndRendererLB;
     HWND hWndDisplayLB;
 } ThreadParam, *pThreadParam;
+
+typedef struct serverEntry_t
+{
+    char szServerName[256];
+    char szMapName[256];
+    char szGameType[256];
+    int nNumPlayers;
+    int nMaxPlayers;
+    int nPing;
+    char szIP[256];
+    char szPort[256];
+    bool bLocked;
+}ServerEntry;
 
 #endif // _TYPES_H_

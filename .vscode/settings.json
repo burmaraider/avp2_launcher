@@ -73,7 +73,11 @@
         "registry.h": "c",
         "shellscalingapi.h": "c",
         "splash.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "display.h": "c",
+        "installer.h": "c",
+        "serverlist.h": "c",
+        "utils.h": "c"
     },
     "cmake.preferredGenerators": [
         "Ninja"

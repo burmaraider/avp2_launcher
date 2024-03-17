@@ -9,8 +9,8 @@
 #include "..\constants.h"
 
 void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop);
-void DisplayRenderScreen();
-void DisplayUpdateLoop();
-void DisplayUnloadScreen();
+void DisplayRenderScreen(void);
+void DisplayUpdateLoop(void);
+void DisplayUnloadScreen(void);
 
 #endif // DISPLAY_H

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
 project (avp2_launcher)
 set(CMAKE_C_STANDARD 17)
-#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused")
+
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -46,6 +46,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RelWithDebInfo ${CMAKE_CURRENT_SOURCE_DIR}/bu
 
 if(${PLATFORM} STREQUAL "Windows")
   if(${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -s")
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_MinSizeRel})
   endif()
 
@@ -65,6 +66,7 @@ endif()
 set(SOURCE_FILES 
 ${SOURCE_DIR}/utils.c
 ${SOURCE_DIR}/registry.c
+${SOURCE_DIR}/Screens/serverlist.c
 ${SOURCE_DIR}/Screens/advanced.c
 ${SOURCE_DIR}/Screens/splash.c
 ${SOURCE_DIR}/Screens/display.c
@@ -72,7 +74,7 @@ ${SOURCE_DIR}/main.c
 )
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} )
-target_link_libraries(${PROJECT_NAME} raylib
+target_link_libraries(${PROJECT_NAME} raylib wsock32 ws2_32
 ${CMAKE_CURRENT_SOURCE_DIR}/assets/MyApp.res)
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 

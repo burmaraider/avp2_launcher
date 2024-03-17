@@ -17,6 +17,7 @@
 #include "include\Screens\splash.h"
 #include "include\Screens\advanced.h"
 #include "include\Screens\display.h"
+#include "include\Screens\serverlist.h"
 
 bool bShouldClose = false;
 
@@ -149,8 +150,13 @@ void ButtonPressCallback(Button *button)
     }
     case BUTTON_DISPLAY:
     {
-        g_nCurrentScreen = SCREEN_DISPLAY;
-        DisplaySetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+        //g_nCurrentScreen = SCREEN_DISPLAY;
+        //DisplaySetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+
+        g_nCurrentScreen = SCREEN_SERVERLIST;
+        ServerlistSetupScreen(ScreenRenderLoop, ScreenUpdateLoop);
+
+
         break;
     }
     case BUTTON_OPTIONS:

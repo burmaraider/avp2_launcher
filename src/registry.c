@@ -1,7 +1,5 @@
 #include "include\registry.h"
 
-
-
 /// @brief This function gets a registry value as an integer
 /// @param hk Type of registry key to open
 /// @param key The key to open
@@ -62,7 +60,7 @@ char *GetRegistryString(HKEY hK, const char *StringName, char *valueBuffer, DWOR
 
 /// @brief This function gets the registry entries for the launcher
 /// @return  True if the registry entries were found, false otherwise
-bool GetRegistryEntries()
+bool GetRegistryEntries(void)
 {
     // Set this to true by default, if we fail to get the registry entries, we'll set it to false
     g_bAVP2Installed = true;
@@ -109,7 +107,7 @@ bool GetRegistryEntries()
     return true;
 }
 
-BOOL IsRunAsAdministrator()
+BOOL IsRunAsAdministrator(void)
 {
     BOOL fIsRunAsAdmin = FALSE;
     DWORD dwError = 0;
@@ -156,7 +154,7 @@ Cleanup:
 
 /// @brief This function installs the registry entries for the launcher and will launch the launcher as administrator if it isn't already running as administrator
 /// @return  True if the registry entries were installed, false otherwise
-bool InstallAVP2Registry()
+bool InstallAVP2Registry(void)
 {
     BOOL bAlreadyRunningAsAdministrator = FALSE;
     bAlreadyRunningAsAdministrator = IsRunAsAdministrator();

@@ -23,7 +23,7 @@ static Button **buttons;
 static uint32_t nPredatorTextureFrame = 0;
 static float fPredatorCountdownTimer = 1.0f; // 10 seconds countdown
 
-void SplashSetupScreen()
+void SplashSetupScreen(void)
 {
 
     // play button
@@ -177,7 +177,7 @@ void SplashSetupScreen()
     }
 }
 
-void SplashScreenRender()
+void SplashScreenRender(void)
 {
     // Start the 2D Canvas
     BeginDrawing();
@@ -200,7 +200,7 @@ void SplashScreenRender()
     EndDrawing();
 }
 
-void SplashUnloadScreen()
+void SplashUnloadScreen(void)
 {
     // null check
     if (buttons == NULL)
@@ -218,7 +218,7 @@ void SplashUnloadScreen()
     buttons = NULL;
 }
 
-static void CheckAllButtons()
+static void CheckAllButtons(void)
 {
     for (size_t i = 0; i < SPLASH_BUTTON_COUNT; i++)
     {
@@ -245,7 +245,7 @@ static void CheckAllButtons()
     }
 }
 
-void SplashUpdateLoop()
+void SplashUpdateLoop(void)
 {
     CheckAllButtons();
 
