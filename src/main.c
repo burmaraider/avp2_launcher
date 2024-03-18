@@ -32,6 +32,8 @@ LauncherSettings g_Settings;
 void (*ScreenRenderLoop)(void);
 void (*ScreenUpdateLoop)(void);
 
+int g_nDragHeight = 16;
+
 int main(int argc, char *argv[])
 {
     // GET THE COMMAND LINE TO HANDLE OUR INSTALL ARGUMENT WITH ADMIN RIGHTS

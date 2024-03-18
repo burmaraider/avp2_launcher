@@ -27,9 +27,9 @@ void SplashSetupScreen(void)
 {
 
     // play button
-    LoadTextureFromResource(&playButton.texture[0], "PLAYU");
-    LoadTextureFromResource(&playButton.texture[1], "PLAYF");
-    LoadTextureFromResource(&playButton.texture[2], "PLAYD");
+    LoadTextureFromResource(&playButton.texture[0], "PLAYU", false);
+    LoadTextureFromResource(&playButton.texture[1], "PLAYF", false);
+    LoadTextureFromResource(&playButton.texture[2], "PLAYD", false);
     playButton.position = (Vector2){417, 19};
     playButton.onPress = ButtonPressCallback;
     playButton.onUnload = UnloadButton;
@@ -37,9 +37,9 @@ void SplashSetupScreen(void)
     playButton.id = BUTTON_PLAY;
 
     // server button
-    LoadTextureFromResource(&serverButton.texture[0], "SERVERU");
-    LoadTextureFromResource(&serverButton.texture[1], "SERVERF");
-    LoadTextureFromResource(&serverButton.texture[2], "SERVERD");
+    LoadTextureFromResource(&serverButton.texture[0], "SERVERU", false);
+    LoadTextureFromResource(&serverButton.texture[1], "SERVERF", false);
+    LoadTextureFromResource(&serverButton.texture[2], "SERVERD", false);
     serverButton.position = (Vector2){417, 55};
     serverButton.onPress = ButtonPressCallback;
     serverButton.onUnload = UnloadButton;
@@ -47,9 +47,9 @@ void SplashSetupScreen(void)
     serverButton.id = BUTTON_SERVER;
 
     // display button
-    LoadTextureFromResource(&displayButton.texture[0], "DISPLAYU");
-    LoadTextureFromResource(&displayButton.texture[1], "DISPLAYF");
-    LoadTextureFromResource(&displayButton.texture[2], "DISPLAYD");
+    LoadTextureFromResource(&displayButton.texture[0], "DISPLAYU", false);
+    LoadTextureFromResource(&displayButton.texture[1], "DISPLAYF", false);
+    LoadTextureFromResource(&displayButton.texture[2], "DISPLAYD", false);
     displayButton.position = (Vector2){417, 91};
     displayButton.onPress = ButtonPressCallback;
     displayButton.onUnload = UnloadButton;
@@ -57,9 +57,9 @@ void SplashSetupScreen(void)
     displayButton.id = BUTTON_DISPLAY;
 
     // options button
-    LoadTextureFromResource(&optionsButton.texture[0], "OPTIONSU");
-    LoadTextureFromResource(&optionsButton.texture[1], "OPTIONSF");
-    LoadTextureFromResource(&optionsButton.texture[2], "OPTIONSD");
+    LoadTextureFromResource(&optionsButton.texture[0], "OPTIONSU", false);
+    LoadTextureFromResource(&optionsButton.texture[1], "OPTIONSF", false);
+    LoadTextureFromResource(&optionsButton.texture[2], "OPTIONSD", false);
     optionsButton.position = (Vector2){417, 127};
     optionsButton.onPress = ButtonPressCallback;
     optionsButton.onUnload = UnloadButton;
@@ -67,9 +67,9 @@ void SplashSetupScreen(void)
     optionsButton.id = BUTTON_OPTIONS;
 
     // exit button
-    LoadTextureFromResource(&exitButton.texture[0], "QUITU");
-    LoadTextureFromResource(&exitButton.texture[1], "QUITF");
-    LoadTextureFromResource(&exitButton.texture[2], "QUITD");
+    LoadTextureFromResource(&exitButton.texture[0], "QUITU", false);
+    LoadTextureFromResource(&exitButton.texture[1], "QUITF", false);
+    LoadTextureFromResource(&exitButton.texture[2], "QUITD", false);
     exitButton.position = (Vector2){417, 199};
     exitButton.onPress = ButtonPressCallback;
     exitButton.onUnload = UnloadButton;
@@ -77,9 +77,9 @@ void SplashSetupScreen(void)
     exitButton.id = BUTTON_EXIT;
 
     // minimize button
-    LoadTextureFromResource(&minimizeButton.texture[0], "MINIMIZEU");
-    LoadTextureFromResource(&minimizeButton.texture[1], "MINIMIZEF");
-    LoadTextureFromResource(&minimizeButton.texture[2], "MINIMIZED");
+    LoadTextureFromResource(&minimizeButton.texture[0], "MINIMIZEU", false);
+    LoadTextureFromResource(&minimizeButton.texture[1], "MINIMIZEF", false);
+    LoadTextureFromResource(&minimizeButton.texture[2], "MINIMIZED", false);
     minimizeButton.position = (Vector2){485, 1};
     minimizeButton.onPress = ButtonPressCallback;
     minimizeButton.onUnload = UnloadButton;
@@ -87,9 +87,9 @@ void SplashSetupScreen(void)
     minimizeButton.id = BUTTON_MINIMIZE;
 
     // x button
-    LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
-    LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
-    LoadTextureFromResource(&xButton.texture[2], "CLOSED");
+    LoadTextureFromResource(&xButton.texture[0], "CLOSEU", false);
+    LoadTextureFromResource(&xButton.texture[1], "CLOSEF", false);
+    LoadTextureFromResource(&xButton.texture[2], "CLOSED", false);
     xButton.position = (Vector2){505, 1};
     xButton.onPress = ButtonPressCallback;
     xButton.onUnload = UnloadButton;
@@ -97,35 +97,35 @@ void SplashSetupScreen(void)
     xButton.id = BUTTON_X;
 
     // generic
-    LoadTextureFromResource(&okButton.texture[0], "OKU");
-    LoadTextureFromResource(&okButton.texture[1], "OKF");
-    LoadTextureFromResource(&okButton.texture[2], "OKD");
+    LoadTextureFromResource(&okButton.texture[0], "OKU", false);
+    LoadTextureFromResource(&okButton.texture[1], "OKF", false);
+    LoadTextureFromResource(&okButton.texture[2], "OKD", false);
     okButton.position = (Vector2){0, 0};
     okButton.onPress = ButtonPressCallback;
     okButton.onUnload = UnloadButton;
     okButton.isEnabled = FALSE;
     okButton.id = BUTTON_OK;
 
-    LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
-    LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
-    LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
+    LoadTextureFromResource(&cancelButton.texture[0], "CANCELU", false);
+    LoadTextureFromResource(&cancelButton.texture[1], "CANCELF", false);
+    LoadTextureFromResource(&cancelButton.texture[2], "CANCELD", false);
     cancelButton.position = (Vector2){0, 0};
     cancelButton.onPress = ButtonPressCallback;
     cancelButton.onUnload = UnloadButton;
     cancelButton.isEnabled = FALSE;
     cancelButton.id = BUTTON_CANCEL;
 
-    LoadTextureFromResource(&installButton.texture[0], "INSTALLU");
-    LoadTextureFromResource(&installButton.texture[1], "INSTALLF");
-    LoadTextureFromResource(&installButton.texture[2], "INSTALLD");
+    LoadTextureFromResource(&installButton.texture[0], "INSTALLU", false);
+    LoadTextureFromResource(&installButton.texture[1], "INSTALLF", false);
+    LoadTextureFromResource(&installButton.texture[2], "INSTALLD", false);
     installButton.position = (Vector2){417, 19};
     installButton.onPress = ButtonPressCallback;
     installButton.onUnload = UnloadButton;
     installButton.id = BUTTON_INSTALL;
 
-    LoadTextureFromResource(&lithFAQButton.texture[0], "LITHFAQU");
-    LoadTextureFromResource(&lithFAQButton.texture[1], "LITHFAQF");
-    LoadTextureFromResource(&lithFAQButton.texture[2], "LITHFAQD");
+    LoadTextureFromResource(&lithFAQButton.texture[0], "LITHFAQU", false);
+    LoadTextureFromResource(&lithFAQButton.texture[1], "LITHFAQF", false);
+    LoadTextureFromResource(&lithFAQButton.texture[2], "LITHFAQD", false);
     lithFAQButton.position = (Vector2){417, 163};
     lithFAQButton.onPress = ButtonPressCallback;
     lithFAQButton.onUnload = UnloadButton;

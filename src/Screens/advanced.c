@@ -239,8 +239,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     saveCommands.isChecked = g_Settings.nSaveCommands;
     if (saveCommands.texture[0].id == 0)
     {
-        LoadTextureFromResource(&saveCommands.texture[0], "ALWAYSSPECIFYN");
-        LoadTextureFromResource(&saveCommands.texture[1], "ALWAYSSPECIFYC");
+        LoadTextureFromResource(&saveCommands.texture[0], "ALWAYSSPECIFYN", false);
+        LoadTextureFromResource(&saveCommands.texture[1], "ALWAYSSPECIFYC", false);
     }
     saveCommands.onPress = CheckboxPress;
     saveCommands.onHover = CheckBoxHover;
@@ -252,8 +252,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableSound.isChecked = g_Settings.nDisableSound;
     if (disableSound.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableSound.texture[0], "DISABLESOUNDN");
-        LoadTextureFromResource(&disableSound.texture[1], "DISABLESOUNDC");
+        LoadTextureFromResource(&disableSound.texture[0], "DISABLESOUNDN", false);
+        LoadTextureFromResource(&disableSound.texture[1], "DISABLESOUNDC", false);
     }
     disableSound.onPress = CheckboxPress;
     disableSound.onHover = CheckBoxHover;
@@ -265,8 +265,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableMusic.isChecked = g_Settings.nDisableMusic;
     if (disableMusic.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableMusic.texture[0], "DISABLEMUSICN");
-        LoadTextureFromResource(&disableMusic.texture[1], "DISABLEMUSICC");
+        LoadTextureFromResource(&disableMusic.texture[0], "DISABLEMUSICN", false);
+        LoadTextureFromResource(&disableMusic.texture[1], "DISABLEMUSICC", false);
     }
     disableMusic.onPress = CheckboxPress;
     disableMusic.onHover = CheckBoxHover;
@@ -278,8 +278,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableMovies.isChecked = g_Settings.nDisableMovies;
     if (disableMovies.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableMovies.texture[0], "DISABLEMOVIESN");
-        LoadTextureFromResource(&disableMovies.texture[1], "DISABLEMOVIESC");
+        LoadTextureFromResource(&disableMovies.texture[0], "DISABLEMOVIESN", false);
+        LoadTextureFromResource(&disableMovies.texture[1], "DISABLEMOVIESC", false);
     }
     disableMovies.onPress = CheckboxPress;
     disableMovies.onHover = CheckBoxHover;
@@ -291,8 +291,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableTripleBuffering.isChecked = g_Settings.nDisableTripleBuffering;
     if (disableTripleBuffering.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableTripleBuffering.texture[0], "DISABLETRIPLEBUFFERINGN");
-        LoadTextureFromResource(&disableTripleBuffering.texture[1], "DISABLETRIPLEBUFFERINGC");
+        LoadTextureFromResource(&disableTripleBuffering.texture[0], "DISABLETRIPLEBUFFERINGN", false);
+        LoadTextureFromResource(&disableTripleBuffering.texture[1], "DISABLETRIPLEBUFFERINGC", false);
     }
     disableTripleBuffering.onPress = CheckboxPress;
     disableTripleBuffering.onHover = CheckBoxHover;
@@ -304,8 +304,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableJoystick.isChecked = g_Settings.nDisableJoysticks;
     if (disableJoystick.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableJoystick.texture[0], "DISABLEJOYSTICKSN");
-        LoadTextureFromResource(&disableJoystick.texture[1], "DISABLEJOYSTICKSC");
+        LoadTextureFromResource(&disableJoystick.texture[0], "DISABLEJOYSTICKSN", false);
+        LoadTextureFromResource(&disableJoystick.texture[1], "DISABLEJOYSTICKSC", false);
     }
     disableJoystick.onPress = CheckboxPress;
     disableJoystick.onHover = CheckBoxHover;
@@ -317,8 +317,8 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     disableHardwareCursor.isChecked = g_Settings.nDisableHardwareCursor;
     if (disableHardwareCursor.texture[0].id == 0)
     {
-        LoadTextureFromResource(&disableHardwareCursor.texture[0], "DISABLEHARDWARECURSORN");
-        LoadTextureFromResource(&disableHardwareCursor.texture[1], "DISABLEHARDWARECURSORC");
+        LoadTextureFromResource(&disableHardwareCursor.texture[0], "DISABLEHARDWARECURSORN", false);
+        LoadTextureFromResource(&disableHardwareCursor.texture[1], "DISABLEHARDWARECURSORC", false);
     }
     disableHardwareCursor.onPress = CheckboxPress;
     disableHardwareCursor.onHover = CheckBoxHover;
@@ -358,9 +358,9 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     // x button
     if (xButton.texture[0].id == 0)
     {
-        LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
-        LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
-        LoadTextureFromResource(&xButton.texture[2], "CLOSED");
+        LoadTextureFromResource(&xButton.texture[0], "CLOSEU", false);
+        LoadTextureFromResource(&xButton.texture[1], "CLOSEF", false);
+        LoadTextureFromResource(&xButton.texture[2], "CLOSED", false);
     }
     xButton.position = (Vector2){435, 1};
     xButton.onPress = OnButtonPressCancel;
@@ -370,9 +370,9 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     // generic
     if (okButton.texture[0].id == 0)
     {
-        LoadTextureFromResource(&okButton.texture[0], "OKU");
-        LoadTextureFromResource(&okButton.texture[1], "OKF");
-        LoadTextureFromResource(&okButton.texture[2], "OKD");
+        LoadTextureFromResource(&okButton.texture[0], "OKU", false);
+        LoadTextureFromResource(&okButton.texture[1], "OKF", false);
+        LoadTextureFromResource(&okButton.texture[2], "OKD", false);
     }
     okButton.position = (Vector2){123, 386};
     okButton.onPress = OnButtonPressOK;
@@ -381,9 +381,9 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
     if (cancelButton.texture[0].id == 0)
     {
-        LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
-        LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
-        LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
+        LoadTextureFromResource(&cancelButton.texture[0], "CANCELU", false);
+        LoadTextureFromResource(&cancelButton.texture[1], "CANCELF", false);
+        LoadTextureFromResource(&cancelButton.texture[2], "CANCELD", false);
     }
     cancelButton.position = (Vector2){235, 386};
     cancelButton.onPress = OnButtonPressCancel;

@@ -3,11 +3,14 @@
 // Function pointers for the original render and update loops
 static void *pOldRenderLoop;
 static void *pOldUpdateLoop;
+static int nOldDragHeight;
 
 // BUTTONS
 static Button xButton;
 static Button okButton;
 static Button cancelButton;
+static Button joinButton;
+static Button refreshButton;
 static Button **buttons;
 
 HANDLE hSocketThread;
@@ -24,10 +27,22 @@ char buffer[1025]; // data buffer of 1K
 //server list
 ServerEntry *serverList;
 int serverCount = 0;
+char *pszBuffer;
 
 //mutex
 CRITICAL_SECTION cs;
-char *pszBuffer;
+
+
+//textures
+Texture2D tServerListTopBar;
+Texture2D tServerTitle;
+
+
+//status bar info it can hold 10 messages each 64 characters long
+char szStatusBar[10][64];
+bool bStatusText = false;
+float fStatusTextTimer = 0.0f;
+int nStatusTextIndex = 0;
 
 
 void ServerlistSetupScreen(void *pRenderLoop, void *pUpdateLoop)
@@ -40,11 +55,67 @@ void ServerlistSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     ScreenRenderLoop = ServerlistRenderScreen;
     ScreenUpdateLoop = ServerlistUpdateLoop;
 
+    // Set the window size
+    nOldDragHeight = g_nDragHeight;
+    g_nDragHeight = 32;
+    SetWindowSize(1280, 800);
+
+    memset(szStatusBar, 0, sizeof(szStatusBar));
+
+    //Load textures
+    LoadTextureFromResource(&tServerListTopBar, "SERVERLISTBAR", false);
+    LoadTextureFromResource(&tServerTitle, "SERVERTITLE", false);
+
+    LoadTextureFromResource(&xButton.texture[0], "SERVERLISTXN", false);
+    LoadTextureFromResource(&xButton.texture[1], "SERVERLISTXH", false);
+    LoadTextureFromResource(&xButton.texture[2], "SERVERLISTXD", false);
+    xButton.position = (Vector2){1280 - 30, 4};
+    xButton.onPress = OnButtonPressCancel;
+    xButton.onUnload = UnloadButton;
+    xButton.isEnabled = true;
+
+    LoadTextureFromResource(&joinButton.texture[0], "SERVERLISTJOINN", false);
+    LoadTextureFromResource(&joinButton.texture[1], "SERVERLISTJOINH", false);
+    LoadTextureFromResource(&joinButton.texture[2], "SERVERLISTJOIND", false);
+    joinButton.position = (Vector2){694, 45};
+    joinButton.onPress = OnButtonPressJoin;
+    joinButton.onUnload = UnloadButton;
+    joinButton.isEnabled = true;
+    
+    LoadTextureFromResource(&refreshButton.texture[0], "SERVERLISTREFRESHN", false);
+    LoadTextureFromResource(&refreshButton.texture[1], "SERVERLISTREFRESHH", false);
+    LoadTextureFromResource(&refreshButton.texture[2], "SERVERLISTREFRESHD", false);
+    refreshButton.position = (Vector2){637, 45};
+    refreshButton.onPress = OnButtonPressRefresh;
+    refreshButton.onUnload = UnloadButton;
+    refreshButton.isEnabled = true;
+
+    buttons = (Button **)malloc(sizeof(Button *) * SERVERLIST_BUTTON_COUNT);
+
+    if (!buttons)
+    {
+        MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
+        exit(1);
+    }
+
+    for (size_t i = 0; i < SERVERLIST_BUTTON_COUNT; i++)
+    {
+        buttons[i] = (Button *)malloc(sizeof(Button));
+
+        if (!buttons[i])
+        {
+            MessageBox(NULL, "Failed to allocate memory for buttons!", "Error", MB_OK | MB_ICONERROR);
+            exit(1);
+        }
+    }
+
+    buttons[0] = &xButton;
+    buttons[1] = &joinButton;
+    buttons[2] = &refreshButton;
+
 
     //setup critical section
     InitializeCriticalSection(&cs);
-    // Start server communication in a separate thread
-    StartServerCommunication(AVP2_MASTER_SERVER, AVP2_MASTER_PORT);
     
 }
 void ServerlistRenderScreen(void)
@@ -52,12 +123,78 @@ void ServerlistRenderScreen(void)
 
     // Start the 2D Canvas
     BeginDrawing();
-    ClearBackground(BLACK);
+    ClearBackground((Color){28,28,28});
+
+    // Draw the top bar
+    DrawTextureTiled(tServerListTopBar, (Rect){0, 0, 32, 32}, (Rect){0, 0, 1280, 32}, (Vector2){0, 0}, 0, 1, WHITE);
+    DrawTexture(tServerTitle, 0, 0, WHITE);
+
+    //12 x 91
+    DrawRectangle(12, 91, 884, 664, (Color){18,18,18,255});
+    
+
+    //Draw Statusbar
+    DrawRectangle(0, 800-32, 1280, 32, (Color){36,36,36,255});
+
+    //draw status text
+
+    if(fStatusTextTimer > 0.01f)
+    {
+        int nAlpha = (int)(fStatusTextTimer * 255.0f / 1.0f);
+        DrawTextRay(szStatusBar[0], 10, 800 - 32 + 8, 16, (Color){107, 154, 194, nAlpha});
+    }
+
+    for (size_t i = 0; i < SERVERLIST_BUTTON_COUNT; i++)
+    {
+        Color color = WHITE;
+        if (!buttons[i]->isEnabled)
+        {
+            color = (Color){110, 110, 110, 255};
+        }
+
+        DrawTexture(buttons[i]->texture[buttons[i]->currentTexture], buttons[i]->position.x, buttons[i]->position.y, color);
+    }
 
     EndDrawing();
 }
+
+static void CheckAllButtons(void)
+{
+    for (size_t i = 0; i < SERVERLIST_BUTTON_COUNT; i++)
+    {
+        Button* button = buttons[i];
+        Vector2 mousePos = GetMousePosition();
+        Rect buttonRect = {button->position.x, button->position.y, button->texture[0].width, button->texture[0].height};
+
+        if (CheckCollisionPointRec(mousePos, buttonRect) && button->isEnabled)
+        {
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+            {
+                button->currentTexture = DOWN;
+            }
+            else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+            {
+                button->currentTexture = HOVER;
+                button->onPress(button);
+            }
+            else
+            {
+                button->currentTexture = HOVER;
+            }
+        }
+        else
+        {
+            button->currentTexture = UP;
+            button->isPressed = FALSE;
+        }
+    }
+}
+
 void ServerlistUpdateLoop(void)
 {
+
+    CheckAllButtons();
+    UpdateStatusText();
 
     if(bSocketThreadDone)
     {
@@ -66,10 +203,22 @@ void ServerlistUpdateLoop(void)
         //reset the flag
         bSocketThreadDone = false;
     }
-    
+
 }
 void ServerlistUnloadScreen(void)
 {
+    // Unload textures
+    UnloadTexture(tServerListTopBar);
+    UnloadTexture(tServerTitle);
+
+    // Unload buttons
+    for (size_t i = 0; i < SERVERLIST_BUTTON_COUNT; i++)
+    {
+        buttons[i]->onUnload(buttons[i]);
+        free(buttons[i]);
+    }
+
+    g_nDragHeight = nOldDragHeight;
 }
 
 
@@ -144,6 +293,10 @@ DWORD WINAPI ServerCommunicationThread(LPVOID lpParam)
         WSACleanup();
     }
 
+    EnterCriticalSection(&cs);
+    AddStatusText("Connected to server");
+    LeaveCriticalSection(&cs);
+
     // Set the mode of the socket to be nonblocking
     // u_long iMode = 1;
     // ioctlsocket(ConnectSocket, FIONBIO, &iMode);
@@ -171,6 +324,10 @@ DWORD WINAPI ServerCommunicationThread(LPVOID lpParam)
 
     bool bEndOfMessage = false;
     bool bGreeting = false;
+
+    EnterCriticalSection(&cs);
+    AddStatusText("Receiving data from server");
+    LeaveCriticalSection(&cs);
     // Receive until the peer closes the connection
     do
     {
@@ -243,19 +400,20 @@ DWORD WINAPI ServerCommunicationThread(LPVOID lpParam)
 
     EnterCriticalSection(&cs);
     printf("Received: %s\n", pszBuffer);
-
+    AddStatusText("Received data from server");
     // cleanup
     closesocket(ConnectSocket);
     WSACleanup();
     
     free(pszBuffer);
     free(data); 
+    refreshButton.isEnabled = true;
     LeaveCriticalSection(&cs);
 
     bSocketThreadDone = true;
 }
 
-void StartServerCommunication(const char* server, const char* port)
+void StartServerCommunication(char* server, char* port)
 {
     ServerData* data = (ServerData*)malloc(sizeof(ServerData));
     if (data == NULL)
@@ -279,4 +437,74 @@ void StartServerCommunication(const char* server, const char* port)
 
     // Close thread handle
     CloseHandle(hThread);
+}
+void AddStatusText(char* text)
+{
+    //add to the next empty slot
+    for (size_t i = 0; i < 10; i++)
+    {
+        if(szStatusBar[i][0] == 0)
+        {
+            strncpy(szStatusBar[i], text, 64);
+            nStatusTextIndex = i;  // Set nStatusTextIndex
+            break;
+        }
+    }
+}
+void UpdateStatusText(void)
+{
+    //using nStatusTextIndex as a counter show the status text for 2 seconds then move to the next one if there is one
+    if(fStatusTextTimer > 0.0f)
+    {
+        fStatusTextTimer -= GetFrameTime();
+    }
+    else
+    {
+        if(szStatusBar[0][0] != 0)
+        {
+            // Display the status text at index 0 for 2 seconds
+            fStatusTextTimer = 1.0f;
+
+            // Shift the elements in the array and count non-blank status texts
+            int nonBlankCount = 0;
+            for(int i = 0; i < 10 - 1; i++)
+            {
+                strcpy(szStatusBar[i], szStatusBar[i + 1]);
+                if(szStatusBar[i][0] != 0)
+                {
+                    nonBlankCount++;
+                }
+            }
+
+            // Clear the last element in the array
+            szStatusBar[10 - 1][0] = 0;
+        }
+    }
+}
+
+static void OnButtonPressCancel(Button *button)
+{
+    ServerlistUnloadScreen();
+
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+
+    g_nCurrentScreen = SCREEN_SPLASH;
+
+    PlaySoundResource("BACK");
+
+    ScreenUpdateLoop = pOldUpdateLoop;
+    ScreenRenderLoop = pOldRenderLoop;
+}
+
+static void OnButtonPressJoin(Button *button)
+{
+    PlaySoundResource("OK");
+
+}
+
+static void OnButtonPressRefresh(Button *button)
+{
+    PlaySoundResource("OK");
+    refreshButton.isEnabled = false;
+    StartServerCommunication((char*)AVP2_MASTER_SERVER, (char*)AVP2_MASTER_PORT);
 }

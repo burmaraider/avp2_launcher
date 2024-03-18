@@ -1,6 +1,7 @@
 #ifndef _REGISTRY_H_
 #define _REGISTRY_H_
 
+
 #include <Windows.h>
 // C headers
 #include <stdint.h>

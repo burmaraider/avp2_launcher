@@ -468,9 +468,9 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // x button
         if (xButton.texture[0].id == 0)
         {
-            LoadTextureFromResource(&xButton.texture[0], "CLOSEU");
-            LoadTextureFromResource(&xButton.texture[1], "CLOSEF");
-            LoadTextureFromResource(&xButton.texture[2], "CLOSED");
+            LoadTextureFromResource(&xButton.texture[0], "CLOSEU", false);
+            LoadTextureFromResource(&xButton.texture[1], "CLOSEF", false);
+            LoadTextureFromResource(&xButton.texture[2], "CLOSED", false);
         }
         xButton.position = (Vector2){579, 1};
         xButton.onPress = OnButtonPressCancel;
@@ -480,9 +480,9 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // generic
         if (okButton.texture[0].id == 0)
         {
-            LoadTextureFromResource(&okButton.texture[0], "OKU");
-            LoadTextureFromResource(&okButton.texture[1], "OKF");
-            LoadTextureFromResource(&okButton.texture[2], "OKD");
+            LoadTextureFromResource(&okButton.texture[0], "OKU", false);
+            LoadTextureFromResource(&okButton.texture[1], "OKF", false);
+            LoadTextureFromResource(&okButton.texture[2], "OKD", false);
         }
         okButton.position = (Vector2){194, 349};
         okButton.onPress = OnButtonPressOK;
@@ -491,9 +491,9 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
         if (cancelButton.texture[0].id == 0)
         {
-            LoadTextureFromResource(&cancelButton.texture[0], "CANCELU");
-            LoadTextureFromResource(&cancelButton.texture[1], "CANCELF");
-            LoadTextureFromResource(&cancelButton.texture[2], "CANCELD");
+            LoadTextureFromResource(&cancelButton.texture[0], "CANCELU", false);
+            LoadTextureFromResource(&cancelButton.texture[1], "CANCELF", false);
+            LoadTextureFromResource(&cancelButton.texture[2], "CANCELD", false);
         }
         cancelButton.position = (Vector2){306, 349};
         cancelButton.onPress = OnButtonPressCancel;

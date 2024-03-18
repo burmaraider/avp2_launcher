@@ -31,8 +31,9 @@ void PlayRandomIntroSound(void);
 
 // TEXTURE STUFF
 void LoadBackgroundImages(void);
-void LoadTextureFromResource(Texture *pTexture, const char *name);
+void LoadTextureFromResource(Texture *pTexture, const char *name, bool bIsPNG);
 void Loader_InitializeBackgroundTextures();
+void DrawTextureTiled(Texture2D texture, Rect source, Rect dest, Vector2 origin, float rotation, float scale, Color tint);
 
 // DPI SCALING STUFF
 typedef BOOL(WINAPI *SETPROCESSDPIAWARE_T)(void);

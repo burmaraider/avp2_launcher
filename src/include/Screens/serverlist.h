@@ -16,7 +16,15 @@ void ServerlistUnloadScreen(void);
 
 
 DWORD WINAPI ServerCommunicationThread(LPVOID lpParam);
-void StartServerCommunication(const char* server, const char* port);
+void StartServerCommunication(char* server, char* port);
+
+
+
+void AddStatusText(char* text);
+void UpdateStatusText(void);
+static void OnButtonPressCancel(Button *button);
+static void OnButtonPressJoin(Button *button);
+static void OnButtonPressRefresh(Button *button);
 
 typedef struct serverData_t
 {

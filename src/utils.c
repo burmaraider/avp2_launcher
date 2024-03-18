@@ -90,37 +90,136 @@ void LoadBackgroundImages(void)
     }
 }
 
-void LoadTextureFromResource(Texture *pTexture, const char *name)
+void LoadTextureFromResource(Texture *pTexture, const char *name, bool bIsPNG)
 {
     HMODULE hInst = GetModuleHandle(NULL);
 
-    HRSRC hRes = FindResource(hInst, name, RT_BITMAP);
+    // Find the resource
+    HRSRC hRes = FindResource(hInst, name, bIsPNG ? RT_RCDATA : RT_BITMAP);
+    
+    // Load the resource
     HGLOBAL hGlobal = LoadResource(hInst, hRes);
     void *pResource = LockResource(hGlobal);
     int nFileSizeLessHeader = SizeofResource(NULL, hRes);
 
-    // construct a bitmap header since it gets stripped from the resource
-    BITMAPFILEHEADER bitmapFileHeader = {0};
-    bitmapFileHeader.bfType = 0x4D42; // BM
-    bitmapFileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nFileSizeLessHeader;
-    bitmapFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-
-    void *pData = calloc(1, nFileSizeLessHeader + sizeof(BITMAPFILEHEADER));
-
+    // Allocate memory for the data
+    int nDataSize = nFileSizeLessHeader + (bIsPNG ? 0 : sizeof(BITMAPFILEHEADER));
+    void *pData = calloc(1, nDataSize);
     if (!pData)
         return;
 
-    memcpy(pData, &bitmapFileHeader, sizeof(BITMAPFILEHEADER));
-    memcpy((char *)pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
+    // Copy the resource data to pData
+    if (!bIsPNG)
+    {
+        // Construct a bitmap header since it gets stripped from the resource
+        BITMAPFILEHEADER bitmapFileHeader = {0};
+        bitmapFileHeader.bfType = 0x4D42; // BM
+        bitmapFileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + nFileSizeLessHeader;
+        bitmapFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
-    // convert bitmap to image
-    Image iImage = LoadImageFromMemory(".bmp", pData, nFileSizeLessHeader + sizeof(BITMAPFILEHEADER));
+        memcpy(pData, &bitmapFileHeader, sizeof(BITMAPFILEHEADER));
+        memcpy((char *)pData + sizeof(BITMAPFILEHEADER), pResource, nFileSizeLessHeader);
+    }
+    else
+    {
+        memcpy(pData, pResource, nFileSizeLessHeader);
+    }
 
+    // Convert the data to an image
+    Image iImage = LoadImageFromMemory(bIsPNG ? ".png" : ".bmp", pData, nDataSize);
+
+    // Load the texture from the image
     *pTexture = LoadTextureFromImage(iImage);
+
+    // Clean up
     UnloadImage(iImage);
     UnlockResource(hGlobal);
     FreeResource(hGlobal);
     free(pData);
+}
+
+// Draw part of a texture (defined by a Rect) with rotation and scale tiled into dest.
+void DrawTextureTiled(Texture2D texture, Rect source, Rect dest, Vector2 origin, float rotation, float scale, Color tint)
+{
+    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
+    if ((source.width == 0) || (source.height == 0)) return;
+
+    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
+    if ((dest.width < tileWidth) && (dest.height < tileHeight))
+    {
+        // Can fit only one tile
+        DrawTexturePro(texture, (Rect){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                    (Rect){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
+    }
+    else if (dest.width <= tileWidth)
+    {
+        // Tiled vertically (one column)
+        int dy = 0;
+        for (;dy+tileHeight < dest.height; dy += tileHeight)
+        {
+            DrawTexturePro(texture, (Rect){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rect){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dy < dest.height)
+        {
+            DrawTexturePro(texture, (Rect){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                        (Rect){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
+        }
+    }
+    else if (dest.height <= tileHeight)
+    {
+        // Tiled horizontally (one row)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            DrawTexturePro(texture, (Rect){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rect){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
+        }
+
+        // Fit last tile
+        if (dx < dest.width)
+        {
+            DrawTexturePro(texture, (Rect){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
+                        (Rect){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
+        }
+    }
+    else
+    {
+        // Tiled both horizontally and vertically (rows and columns)
+        int dx = 0;
+        for (;dx+tileWidth < dest.width; dx += tileWidth)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, source, (Rect){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rect){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rect){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
+            }
+        }
+
+        // Fit last column of tiles
+        if (dx < dest.width)
+        {
+            int dy = 0;
+            for (;dy+tileHeight < dest.height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, (Rect){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
+                        (Rect){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
+            }
+
+            // Draw final tile in the bottom right corner
+            if (dy < dest.height)
+            {
+                DrawTexturePro(texture, (Rect){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
+                    (Rect){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
+            }
+        }
+    }
 }
 
 void Loader_InitializeBackgroundTextures(void)
@@ -226,7 +325,7 @@ void DragWindow(void)
     static bool bIsDragging = FALSE;
 
     // Check if user is dragging the window
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && GetMousePosition().y < 16 && GetMousePosition().x < GetScreenWidth() - 40)
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && GetMousePosition().y < g_nDragHeight && GetMousePosition().x < GetScreenWidth() - 40)
     {
         bIsDragging = TRUE;
         initialMousePosition = GetMousePosition();
