@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
     // INIT RAYLIB
     // VSYNC AND WINDOW UNDECORATED
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_HIGHDPI);
 
     // SETS THE WINDOW TITLE
     //--------------------------------------------------------------------------------------

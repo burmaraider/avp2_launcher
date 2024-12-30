@@ -349,7 +349,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 static void OnButtonPressOK(Button *button)
 {
-    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    Vector2 dpi = GetWindowScaleDPI();
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH * dpi.x, AVP2_MAIN_SCREEN_HEIGHT * dpi.y);
     g_nCurrentScreen = SCREEN_SPLASH;
 
     PlaySoundResource("OK");
@@ -381,7 +382,8 @@ static void OnButtonPressOK(Button *button)
 
 static void OnButtonPressCancel(Button *button)
 {
-    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    Vector2 dpi = GetWindowScaleDPI();
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH * dpi.x, AVP2_MAIN_SCREEN_HEIGHT * dpi.y);
 
     g_nCurrentScreen = SCREEN_SPLASH;
 
@@ -407,6 +409,8 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
     ScreenRenderLoop = DisplayRenderScreen;
     ScreenUpdateLoop = DisplayUpdateLoop;
 
+    Vector2 dpi = GetWindowScaleDPI();
+
     SetProcessDpiAware();
 
     g_hWnd = GetWindowHandle();
@@ -416,21 +420,21 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
 
         hWndResolutionListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("1"),
                                                WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
-                                               20, 78, 126, 240, g_hWnd, NULL, NULL, NULL);
+                                               20 * dpi.x, 78 * dpi.x, 126 * dpi.y, 240 * dpi.x, g_hWnd, NULL, NULL, NULL);
 
         hWndRendererListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("2"),
                                              WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
-                                             180, 78, 403, 105, g_hWnd, NULL, NULL, NULL);
+                                             180* dpi.x, 78* dpi.x, 403* dpi.x, 105* dpi.x, g_hWnd, NULL, NULL, NULL);
 
         hWndDisplayAdapterListBox = CreateWindowEx(0, TEXT("LISTBOX"), TEXT("3"),
                                                    WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
-                                                   180, 206, 403, 105, g_hWnd, NULL, NULL, NULL);
+                                                   180* dpi.x, 206 * dpi.x, 403 * dpi.x, 105* dpi.x, g_hWnd, NULL, NULL, NULL);
 
         // set font size to 14
         // SendMessage(hwndListBox, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), MAKELPARAM(FALSE, 0));
 
         // set font
-        HFONT hFont = CreateFontA(13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+        HFONT hFont = CreateFontA(13* dpi.x, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
                                   CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, "Segoe UI");
         SendMessage(hWndResolutionListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
         SendMessage(hWndRendererListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
@@ -460,7 +464,7 @@ void DisplaySetupScreen(void *pRenderLoop, void *pUpdateLoop)
         ShowWindow(hWndDisplayAdapterListBox, SW_SHOW);
     }
 
-    SetWindowSize(600, 394);
+    SetWindowSize(600 * dpi.x, 394 * dpi.y);
 
     if (bFirstTime)
     {

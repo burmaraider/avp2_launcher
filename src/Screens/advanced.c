@@ -122,9 +122,11 @@ static void OnButtonPressOK(Button *button)
 
     SaveSettingsToRegistry();
 
+
     // SaveSettings();
     g_nCurrentScreen = SCREEN_SPLASH;
-    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    Vector2 dpi = GetWindowScaleDPI();
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH * dpi.x, AVP2_MAIN_SCREEN_HEIGHT * dpi.y);
 
     PlaySoundResource("OK");
 
@@ -134,7 +136,8 @@ static void OnButtonPressOK(Button *button)
 
 static void OnButtonPressCancel(Button *button)
 {
-    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH, AVP2_MAIN_SCREEN_HEIGHT);
+    Vector2 dpi = GetWindowScaleDPI();
+    SetWindowSize(AVP2_MAIN_SCREEN_WIDTH * dpi.x, AVP2_MAIN_SCREEN_HEIGHT * dpi.y);
     xButton.onPress = ButtonPressCallback;
     xButton.position = (Vector2){505, 1};
 
@@ -188,6 +191,9 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     ScreenRenderLoop = OptionsRenderScreen;
     ScreenUpdateLoop = OptionsUpdateLoop;
 
+    Vector2 dpi = GetWindowScaleDPI();
+    SetWindowSize(456 * dpi.x, 431 * dpi.y);
+
     SetProcessDpiAware();
 
     g_hWnd = GetWindowHandle();
@@ -199,7 +205,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
         // create textbox
         hwndTextBox = CreateWindowExA(0, TEXT("RICHEDIT50W"), TEXT("Type here"),
                                       WS_CHILD | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL | ES_WANTRETURN,
-                                      26, 218, 400, 18, g_hWnd, NULL, GetModuleHandle(NULL), NULL);
+                                      26 * dpi.x, 218 * dpi.y, 400 * dpi.y, 18 * dpi.x, g_hWnd, NULL, GetModuleHandle(NULL), NULL);
 
         // setup callback oldWndProc
         oldWndProc = (WNDPROC)SetWindowLongPtr(hwndTextBox, GWLP_WNDPROC, (LONG_PTR)Wndproc);
@@ -210,7 +216,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
         SendMessage(hwndTextBox, EM_SETBKGNDCOLOR, 0, RGB(0, 0, 0));
 
         // set font
-        HFONT hFont = CreateFontA(18, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+        HFONT hFont = CreateFontA(18 * dpi.x, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
                                   CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_MODERN, "Segoe UI");
         SendMessage(hwndTextBox, WM_SETFONT, (WPARAM)hFont, TRUE);
 
@@ -233,7 +239,7 @@ void OptionsSetupScreen(void *pRenderLoop, void *pUpdateLoop)
     // scale text in text boss because DPI scaling
     SendMessage(hwndTextBox, EM_SETZOOM, 0, 0);
 
-    SetWindowSize(456, 431);
+    
 
     saveCommands.position = (Vector2){26, 246};
     saveCommands.isChecked = g_Settings.nSaveCommands;
